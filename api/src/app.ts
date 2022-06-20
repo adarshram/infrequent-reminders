@@ -33,7 +33,7 @@ const initializeApp = async (): Promise<void> => {
 		console.error(error.stack);
 		res.status(500).send('Something Broke!');
 	});
-	const portToRun = process.env.port ?? 3050;
+	const portToRun = process.env.PORT ?? 3050;
 	app.listen(portToRun);
 };
 
