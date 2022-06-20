@@ -6,7 +6,7 @@
   "scripts": {
     "setenv": "",
     "test": "mocha -r ts-node/register ",
-    "start": "nodemon"
+    "start": "npx ts-node ./src/app.ts"
   },
   "author": "",
   "license": "ISC",
