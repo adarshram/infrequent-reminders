@@ -8,7 +8,7 @@ import {
   snoozeNotification,
   getPendingNotificationCount,
   completeNotification,
-} from '../models/userNotifications';
+} from '../models/UserNotifications';
 import MetaNotificationsClass from '../models/MetaNotifications';
 import { successResponse, errorResponse } from '../responses';
 
