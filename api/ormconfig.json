@@ -1,0 +1,9 @@
+{
+	"type": "postgres",
+	"host": "localhost",
+	"port": 5432,
+	"username": "postgres",
+	"password": "4911918",
+	"database": "infrequent-scheduler",
+	"entities": ["src/entity/*.ts"]
+}

@@ -1,0 +1,69 @@
+import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getMessaging } from 'firebase-admin/messaging';
+
+//import * as serviceAccount from '../../../google_credentials.json';
+const serviceAccount = require('../../google_credentials.json');
+
+import { getFirestore } from 'firebase-admin/firestore';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyAC4cEsmqRUTSNF1VBAiQdsNNNcs4HeWqo',
+  authDomain: 'infrequent-scheduler.firebaseapp.com',
+  projectId: 'infrequent-scheduler',
+  storageBucket: 'infrequent-scheduler.appspot.com',
+  messagingSenderId: '9005250937',
+  appId: '1:9005250937:web:2133237a6e4d0e7d7e57a8',
+  measurementId: 'G-DFSJ99XM8Z',
+  credential: cert(serviceAccount),
+};
+
+let fireBase = initializeApp(firebaseConfig);
+let fireStoreDbObject: boolean | any;
+export const getAuthenticatedUser = async (idToken: string) => {
+  let authenticatedResults = await getAuth(fireBase).verifyIdToken(idToken);
+  return authenticatedResults;
+};
+export const getMessagingObject = async (): Promise<any> => {
+  let messagingObject = await getMessaging(fireBase);
+  return messagingObject;
+};
+
+export const addToCollection = async (
+  collectionName: string,
+  data: any,
+  id: string | number | boolean,
+): Promise<any> => {
+  const fireStoreDbObject = getFirestore();
+  let docRef;
+  if (typeof id === 'boolean') {
+    docRef = fireStoreDbObject.collection(collectionName).doc();
+  }
+  if (typeof id == 'string') {
+    docRef = fireStoreDbObject.collection(collectionName).doc(id);
+  }
+  let ins = await docRef.set(data);
+  return ins;
+};
+
+export const getFireStoreDbObject = () => {
+  if (!fireStoreDbObject) {
+    fireStoreDbObject = getFirestore();
+  }
+  return fireStoreDbObject;
+};
+
+export const updateCollection = async (collectionName, data, id) => {};
+
+export const getDocRef = (collectionName, id) => {};
+
+export const getCollectionById = async (collectionName, id) => {};
+
+export const searchCollection = async (collectionName, field, compare, value) => {};
+
+export const deleteDocument = async (collectionName, id) => {};
+/*
+
+set GOOGLE_APPLICATION_CREDENTIALS=C:\Users\adars\projects\crypto\infrequent-scheduler\google_credentials.json
+
+*/
