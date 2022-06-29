@@ -12,6 +12,7 @@ import {
 
 import { UserNotifications } from '../entity/UserNotifications';
 import { NotificationSet } from '../entity/NotificationSet';
+
 type EntityConstructor = typeof UserNotifications | typeof NotificationSet;
 
 export const getById = async <T extends EntityConstructor>(

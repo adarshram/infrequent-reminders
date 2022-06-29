@@ -1,30 +1,41 @@
 import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getMessaging } from 'firebase-admin/messaging';
-
-//import * as serviceAccount from '../../../google_credentials.json';
-const serviceAccount = require('../../google_credentials.json');
+import 'dotenv/config';
 
 import { getFirestore } from 'firebase-admin/firestore';
+import { getFirebaseCredentials } from '../models/SystemCredentials';
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyAC4cEsmqRUTSNF1VBAiQdsNNNcs4HeWqo',
-  authDomain: 'infrequent-scheduler.firebaseapp.com',
-  projectId: 'infrequent-scheduler',
-  storageBucket: 'infrequent-scheduler.appspot.com',
-  messagingSenderId: '9005250937',
-  appId: '1:9005250937:web:2133237a6e4d0e7d7e57a8',
-  measurementId: 'G-DFSJ99XM8Z',
-  credential: cert(serviceAccount),
+let fireBase = undefined;
+let fireStoreDbObject: boolean | any;
+const initializeFireBase = async () => {
+  const serviceAccount = await getFirebaseCredentials();
+  let serviceAccount1 = serviceAccount as unknown as string;
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyAC4cEsmqRUTSNF1VBAiQdsNNNcs4HeWqo',
+    authDomain: 'infrequent-scheduler.firebaseapp.com',
+    projectId: 'infrequent-scheduler',
+    storageBucket: 'infrequent-scheduler.appspot.com',
+    messagingSenderId: '9005250937',
+    appId: '1:9005250937:web:2133237a6e4d0e7d7e57a8',
+    measurementId: 'G-DFSJ99XM8Z',
+    credential: cert(serviceAccount1),
+  };
+  fireBase = initializeApp(firebaseConfig);
 };
 
-let fireBase = initializeApp(firebaseConfig);
-let fireStoreDbObject: boolean | any;
 export const getAuthenticatedUser = async (idToken: string) => {
+  if (!fireBase) {
+    await initializeFireBase();
+  }
   let authenticatedResults = await getAuth(fireBase).verifyIdToken(idToken);
   return authenticatedResults;
 };
 export const getMessagingObject = async (): Promise<any> => {
+  if (!fireBase) {
+    await initializeFireBase();
+  }
   let messagingObject = await getMessaging(fireBase);
   return messagingObject;
 };

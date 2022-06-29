@@ -2,15 +2,9 @@ import * as express from 'express';
 import * as cors from 'cors';
 import { Request, Response } from 'express';
 import { attachPrivateRoutes } from './routes';
-import { createConnection } from 'typeorm';
+import 'dotenv/config';
+import { establishDatabaseConnection } from './utils/dataBase';
 
-const establishDatabaseConnection = async (): Promise<void> => {
-	try {
-		await createConnection();
-	} catch (error) {
-		console.log(error);
-	}
-};
 const initializeApp = async (): Promise<void> => {
 	await establishDatabaseConnection();
 	const app = express();

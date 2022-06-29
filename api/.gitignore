@@ -2,7 +2,8 @@
 
 # dependencies
 /node_modules
-
+/heroku
+gcredentials.json
 # misc
 .DS_Store
 .env.local
