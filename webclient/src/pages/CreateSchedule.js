@@ -43,6 +43,7 @@ export default function CreateSchedule(props) {
 		id: false,
 		notification_date: format(add(new Date(), { weeks: 1 }), 'MM/dd/yyyy'),
 		frequency_type: 'w',
+		is_active: true,
 	});
 
 	const [errors, setErrors] = useState([]);
