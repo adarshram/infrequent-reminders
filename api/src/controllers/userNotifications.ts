@@ -41,7 +41,8 @@ export const show = async (req: Request, res: Response) => {
 
 export const save = async (req: Request, res: Response) => {
   const fBaseUser = res.locals.user;
-  const { subject, description, frequency_type, frequency, notification_date, id } = req.body;
+  const { subject, description, frequency_type, frequency, notification_date, id, is_active } =
+    req.body;
   const result = await createNotificationsForUser({
     id: id ? id * 1 : false,
     user_id: fBaseUser.uid,
@@ -50,6 +51,7 @@ export const save = async (req: Request, res: Response) => {
     frequency_type: frequency_type,
     frequency: frequency,
     notification_date: notification_date,
+    is_active: is_active ? is_active : true,
   });
   if (result) {
     successResponse(res, result);
