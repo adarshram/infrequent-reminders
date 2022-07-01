@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	ListItem,
 	ListItemText,
@@ -25,6 +25,9 @@ export default function ShowSchedule({
 	editHandler,
 	snoozeOrCompleteHandler,
 	deleteHandler,
+	doneHandler,
+	setCurrentSchedule,
+	currentSchedule,
 }) {
 	const handleSnoozeOrComplete = (e) => {
 		e.preventDefault();
@@ -39,8 +42,17 @@ export default function ShowSchedule({
 		setConfirmDelete(false);
 		deleteHandler(schedule);
 	};
+	const handleDone = (e) => {
+		if (doneHandler) {
+			doneHandler(schedule);
+		}
+	};
 	const [expand, setExpand] = useState(false);
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	useEffect(() => {
+		let expanded = currentSchedule && schedule && currentSchedule.id === schedule.id;
+		setExpand(expanded);
+	}, [currentSchedule]);
 
 	const ExpandedOptions = () => {
 		return (
@@ -52,13 +64,24 @@ export default function ShowSchedule({
 				>
 					<EditIcon />
 				</ListItemIcon>
+				{schedule.is_pending && (
+					<ListItemIcon
+						onClick={(e) => {
+							handleSnoozeOrComplete(e);
+						}}
+					>
+						<SnoozeIcon alt="snooze" />
+					</ListItemIcon>
+				)}
+
 				<ListItemIcon
 					onClick={(e) => {
-						handleSnoozeOrComplete(e);
+						handleDone(e);
 					}}
 				>
-					{schedule.is_pending ? <SnoozeIcon alt="snooze" /> : <DoneIcon alt="done" />}
+					<DoneIcon alt="done" />
 				</ListItemIcon>
+
 				<ListItemIcon
 					onClick={(e) => {
 						setConfirmDelete(true);
@@ -102,19 +125,16 @@ export default function ShowSchedule({
 				key={key}
 				alignItems="flex-start"
 				onClick={() => {
-					setExpand(!expand);
+					setCurrentSchedule(schedule);
 				}}
 				disablePadding
 			>
 				<ListItemButton
 					selected={expand}
 					onClick={(event) => {
-						setExpand(!expand);
+						setCurrentSchedule(schedule);
 					}}
 				>
-					<ListItemIcon>
-						<EditIcon />
-					</ListItemIcon>
 					<ListItemText
 						primary={schedule.subject}
 						secondary={

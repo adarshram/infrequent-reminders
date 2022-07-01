@@ -20,6 +20,7 @@ export default function ListSchedules() {
 
 	const [scheduleLists, setScheduleLists] = useState([]);
 	const [loadScheduleLists, setLoadScheduleList] = useState(true);
+	const [currentSchedule, setCurrentSchedule] = useState(false);
 
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -68,6 +69,13 @@ export default function ListSchedules() {
 		}
 	};
 
+	const handleDone = async (currentNotification) => {
+		let completed = await completeNotification.get(currentNotification.id);
+		if (completed.data && completed.data.days !== false) {
+			setLoadScheduleList(true);
+		}
+	};
+
 	const handleEdit = (data) => {
 		if (data.id) {
 			navigate(`/create/${data.id}`);
@@ -97,6 +105,9 @@ export default function ListSchedules() {
 								editHandler={handleEdit}
 								snoozeOrCompleteHandler={handleSnoozeOrComplete}
 								deleteHandler={handleDelete}
+								doneHandler={handleDone}
+								setCurrentSchedule={setCurrentSchedule}
+								currentSchedule={currentSchedule}
 							/>
 						))}
 					{scheduleLists.length === 0 && (
