@@ -19,4 +19,7 @@ export class NotificationSetLink {
 
   @Column()
   updated_at: Date;
+
+  @Column()
+  complete: boolean;
 }

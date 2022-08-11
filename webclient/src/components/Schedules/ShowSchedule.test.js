@@ -1,64 +1,38 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import ShowSchedule from './ShowSchedule';
 import { act } from 'react-dom/test-utils';
-
-test('shows subject and expands', async () => {
-	const setCurrentSchedule = jest.fn();
-
-	render(
+import React, { useState, useEffect, useContext } from 'react';
+const wait = async () => {
+	new Promise(function (resolve) {
+		setTimeout(resolve, 100);
+	});
+};
+const doneHandler = jest.fn();
+1;
+const snoozeOrCompleteHandler = jest.fn();
+const deleteHandler = jest.fn();
+const Dummy = ({ is_pending }) => {
+	const [currentSchedule, setCurrentSchedule] = useState({ id: 112 });
+	return (
 		<ShowSchedule
 			schedule={{
 				id: 123,
 				subject: 'Hello Test',
 				notification_date: '2020-01-02',
 				description: 'Description of hello test',
+				is_pending: is_pending ?? 0,
 			}}
 			setCurrentSchedule={setCurrentSchedule}
-			currentSchedule={{ id: 123 }}
-		/>,
-	);
-	const subject = screen.getByText('Hello Test');
-	expect(subject).toBeInTheDocument();
-	const doneButton = screen.getByTestId('DoneIcon');
-	expect(doneButton).toBeInTheDocument();
-});
-
-test('shows calls expand', async () => {
-	const setCurrentSchedule = jest.fn();
-
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-			}}
-			setCurrentSchedule={setCurrentSchedule}
-			currentSchedule={{}}
-		/>,
-	);
-	const subject = screen.getByText('Hello Test');
-	expect(subject).toBeInTheDocument();
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
-	act(() => {
-		fireEvent.click(expandButton);
-	});
-	expect(setCurrentSchedule).toBeCalled();
-});
-test.skip('Shows snooze button and done', () => {
-	const doneHandler = jest.fn();
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 1,
-			}}
+			currentSchedule={currentSchedule}
+			snoozeOrCompleteHandler={snoozeOrCompleteHandler}
+			deleteHandler={deleteHandler}
 			doneHandler={doneHandler}
-		/>,
+		/>
 	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
+};
+test('shows_snooze button and done', () => {
+	render(<Dummy is_pending={1} />);
+	const expandButton = screen.getByRole('button', { name: /Hello Test/i });
 	fireEvent.click(expandButton);
 	const snoozeButton = screen.getByTestId('SnoozeIcon');
 	expect(snoozeButton).toBeInTheDocument();
@@ -67,100 +41,25 @@ test.skip('Shows snooze button and done', () => {
 	fireEvent.click(doneButton);
 	expect(doneHandler).toBeCalled();
 });
-test.skip('Click snooze button', () => {
-	const handleClick = jest.fn();
-
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 1,
-			}}
-			snoozeOrCompleteHandler={handleClick}
-		/>,
-	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
+test('click_snooze button', () => {
+	render(<Dummy is_pending={1} />);
+	const expandButton = screen.getByRole('button', { name: /Hello Test/i });
 	//expect(expandButton).toBeInTheDocument();
 	fireEvent.click(expandButton);
 	const snoozeButton = screen.getByTestId('SnoozeIcon');
 	expect(snoozeButton).toBeInTheDocument();
 	fireEvent.click(snoozeButton);
-	expect(handleClick).toHaveBeenCalledTimes(1);
+	expect(snoozeOrCompleteHandler).toHaveBeenCalledTimes(1);
 });
-test.skip('Shows Done button', () => {
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 0,
-			}}
-		/>,
-	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
+test('calls_delete and no snooze', async () => {
+	render(<Dummy />);
+	const expandButton = screen.getByRole('button', { name: /Hello Test/i });
 	//expect(expandButton).toBeInTheDocument();
-	fireEvent.click(expandButton);
-	const snoozeButton = screen.getByTestId('DoneIcon');
-	expect(snoozeButton).toBeInTheDocument();
-});
-test.skip('Shows Delete button', () => {
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 0,
-			}}
-		/>,
-	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
-	//expect(expandButton).toBeInTheDocument();
-	fireEvent.click(expandButton);
-	const deleteButton = screen.getByTestId('DeleteIcon');
-	expect(deleteButton).toBeInTheDocument();
-	//click delete and expect confirm to open
-	//fireEvent.click(expandButton);
-});
-test.skip('Shows Delete Alert', () => {
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 0,
-			}}
-		/>,
-	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
-	//expect(expandButton).toBeInTheDocument();
-	fireEvent.click(expandButton);
-	const deleteButton = screen.getByTestId('DeleteIcon');
-	//click delete and expect confirm to open
-	fireEvent.click(deleteButton);
-	const confirmDeleteButton = screen.getByRole('confirm-delete');
-	expect(confirmDeleteButton).toBeInTheDocument();
-});
-test.skip('Calls Delete and hides dialog', () => {
-	const deleteHandler = jest.fn();
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 0,
-			}}
-			deleteHandler={deleteHandler}
-		/>,
-	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
-	//expect(expandButton).toBeInTheDocument();
-	fireEvent.click(expandButton);
+
+	await act(async () => {
+		fireEvent.click(expandButton);
+		await wait();
+	});
 	const deleteButton = screen.getByTestId('DeleteIcon');
 	//click delete and expect confirm to open
 	fireEvent.click(deleteButton);
@@ -168,22 +67,13 @@ test.skip('Calls Delete and hides dialog', () => {
 	fireEvent.click(confirmDeleteButton);
 	expect(deleteHandler).toHaveBeenCalledTimes(1);
 	expect(screen.queryByText('Are you sure you want to Delete?')).toBeNull();
+
+	const snoozeButton = screen.queryAllByTestId('SnoozeIcon');
+	expect(snoozeButton.length).toBe(0);
 });
-test.skip('Calls Cancel and hides dialog', () => {
-	const deleteHandler = jest.fn();
-	render(
-		<ShowSchedule
-			schedule={{
-				subject: 'Hello Test',
-				notification_date: '2020-01-02',
-				description: 'Description of hello test',
-				is_pending: 0,
-			}}
-			deleteHandler={deleteHandler}
-		/>,
-	);
-	const expandButton = screen.getByRole('button', { Name: 'Hello Test' });
-	//expect(expandButton).toBeInTheDocument();
+test('calls_cancel and hides dialog', () => {
+	render(<Dummy />);
+	const expandButton = screen.getByRole('button', { name: /Hello Test/i });
 	fireEvent.click(expandButton);
 	const deleteButton = screen.getByTestId('DeleteIcon');
 	//click delete and expect confirm to open

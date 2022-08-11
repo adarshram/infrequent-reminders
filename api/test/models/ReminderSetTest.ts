@@ -11,7 +11,11 @@ import {
 	deleteNotificationFromSet,
 	getSetList,
 } from './../../src/models/ReminderSet';
-import { deleteNotification, getNotificationById } from './../../src/models/UserNotifications';
+import {
+	deleteNotification,
+	getNotificationById,
+	completeNotification,
+} from './../../src/models/UserNotifications';
 
 import { expect } from 'chai';
 import 'mocha';
@@ -34,6 +38,7 @@ describe('save new reminder set', () => {
 				description: 'Short Desc1ription',
 				notification_date: new Date(),
 				days_after: 2,
+				complete: false,
 			},
 			{
 				unique_id: new Date().getTime(),
@@ -41,6 +46,7 @@ describe('save new reminder set', () => {
 				description: 'Short Des2cription',
 				notification_date: new Date(),
 				days_after: 2,
+				complete: false,
 			},
 		],
 	};
@@ -75,7 +81,13 @@ describe('save new reminder set', () => {
 			expect(linkedReminders.length).to.be.equal(0);
 		}
 	});
-	xit('gets reminder set data and reminders', async () => {
+	it('gets reminder set data and reminders', async () => {
+		//delete
+		const responseData = await getSetList('123');
+		responseData.data.map(async (notificationSet) => {
+			const deleted = await deleteNotificationSet(notificationSet.id);
+		});
+
 		let validReminderData = {
 			...reminderData,
 		};
@@ -88,12 +100,25 @@ describe('save new reminder set', () => {
 			};
 
 			let index = 0;
-			await saveSingleNotificationForSet(singleNotificationParams, index);
+			let firstNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
 			index = 1;
-			await saveSingleNotificationForSet(singleNotificationParams, index);
+			let secondNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+
+			await completeNotification(firstNotification.id, firstNotification.user_id);
 
 			let notificationSet = await getSetById(notificationResult.id);
 			let linkedReminders = await getLinkedReminders(notificationResult.id);
+
+			expect(linkedReminders[0].meta.done_count).to.be.equal(1);
+			if (linkedReminders[0]?.link) {
+				expect(linkedReminders[0].link).to.have.property('days_after');
+				expect(linkedReminders[0].link.complete).to.be.equal(true);
+			}
+			let userNotification = await getNotificationById(
+				linkedReminders[1].id,
+				linkedReminders[1].user_id,
+			);
+			expect(userNotification.is_active).to.be.equal(true);
 
 			expect(notificationSet.subject).to.be.equal(validReminderData.subject);
 			expect(linkedReminders.length).to.be.equal(2);
@@ -185,10 +210,58 @@ describe('save new reminder set', () => {
 		expect(responseData.data[0].user_id).to.be.equal(userId);
 		expect(responseData.data[0].no_sets).to.be.a('number');
 	});
-	it('delete everything', async () => {
+	xit('delete everything', async () => {
 		const responseData = await getSetList('123');
 		responseData.data.map(async (notificationSet) => {
 			const deleted = await deleteNotificationSet(notificationSet.id);
 		});
+	});
+	xit('creates,completes and uncompletes reminder set', async () => {
+		const responseData = await getSetList('123');
+		responseData.data.map(async (notificationSet) => {
+			const deleted = await deleteNotificationSet(notificationSet.id);
+		});
+
+		let validReminderData = {
+			...reminderData,
+		};
+		const notificationResult = await saveSetFromRequest(validReminderData);
+		if (typeof notificationResult !== 'boolean') {
+			let singleNotificationParams = {
+				...reminderData.reminders[0],
+				set_id: notificationResult.id,
+				user_id: reminderData.user_id,
+			};
+
+			let index = 0;
+			let singleNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			await completeNotification(singleNotification.id, singleNotification.user_id);
+
+			index = 1;
+			singleNotificationParams = {
+				...singleNotificationParams,
+				complete: true,
+			};
+			await saveSingleNotificationForSet(singleNotificationParams, index);
+
+			let notificationSet = await getSetById(notificationResult.id);
+			let linkedReminders = await getLinkedReminders(notificationResult.id);
+
+			expect(linkedReminders[0].meta.done_count).to.be.equal(1);
+			if (linkedReminders[0]?.link) {
+				expect(linkedReminders[0].link).to.have.property('days_after');
+			}
+
+			expect(notificationSet.subject).to.be.equal(validReminderData.subject);
+			expect(linkedReminders.length).to.be.equal(2);
+
+			//this checks if saving with completed set to true works
+			expect(linkedReminders[0].link.complete).to.be.equal(true);
+
+			//this checks if saving with completed set to true works
+			expect(linkedReminders[1].link.complete).to.be.equal(true);
+
+			await deleteNotificationSet(notificationResult.id);
+		}
 	});
 });

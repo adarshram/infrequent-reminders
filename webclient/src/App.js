@@ -8,6 +8,8 @@ import { red } from '@mui/material/colors';
 
 import CreateSchedule from './pages/CreateSchedule';
 import ListSchedules from './pages/ListSchedules';
+import Dashboard from './pages/Dashboard';
+
 import UserProfile from './pages/UserProfile';
 import PendingNotifications from './pages/PendingNotifications';
 import ScheduleDetails from './pages/ScheduleDetails';
@@ -91,7 +93,7 @@ function App() {
                 <Route element={<PrivateRoute />}>
                   <Route path="/create/:id" element={<CreateSchedule />} />
                   <Route path="/create" element={<CreateSchedule />} />
-                  <Route path="/" element={<ListSchedules />} />
+                  <Route path="/" element={<Dashboard />} />
                   <Route path="/list" element={<ListSchedules />} />
                   <Route path="/pending" element={<PendingNotifications />} />
                   <Route path="/details/:id" element={<ScheduleDetails />} />

@@ -20,6 +20,8 @@ export const attachPrivateRoutes = (app: any): void => {
 
   app.post('/user/notifications/save', authRoute, userNotifications.save);
   app.post('/user/notifications/list', authRoute, userNotifications.list);
+  app.post('/user/notifications/fullMonth', authRoute, userNotifications.listNotificationsForMonth);
+  app.post('/user/notifications/listByDate', authRoute, userNotifications.listNotificationsForDate);
   app.get('/user/notifications/show/:id', authRoute, userNotifications.show);
   app.post('/user/notifications/delete', authRoute, userNotifications.deleteRow);
   app.get('/user/notifications/pending', authRoute, userNotifications.pendingNotifications);

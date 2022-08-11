@@ -1,15 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react';
-import {
-	Button,
-	TextField,
-	Box,
-	Grid,
-	Typography,
-	Select,
-	MenuItem,
-	Paper,
-	Alert,
-} from '@mui/material';
 
 import { useParams } from 'react-router-dom'; // version 5.2.0
 import useServerCall from '../../hooks/useServerCall';
@@ -40,6 +29,9 @@ export default function ReminderSet(props) {
 			});
 			if (results) {
 				setSuccessMessage(`Successfully Saved Set ${formValues.subject}`);
+				setTimeout(100, () => {
+					setSuccessMessage(false);
+				});
 				return;
 			}
 		} catch (e) {
@@ -72,6 +64,9 @@ export default function ReminderSet(props) {
 	}, [type, params]);
 
 	useEffect(() => {
+		if (user_id && !params.id) {
+			setReminderData({});
+		}
 		if (params.id && user_id) {
 			const fetchData = async () => {
 				setErrors([]);
@@ -93,7 +88,7 @@ export default function ReminderSet(props) {
 			};
 			fetchData();
 		}
-	}, [params.id, user_id]);
+	}, [params.id, user_id, getReminderSet]);
 
 	const isLoading = moduleType === null;
 	if (isLoading) {

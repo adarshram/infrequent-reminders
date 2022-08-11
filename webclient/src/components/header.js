@@ -14,7 +14,7 @@ export default function Header({ text, onClose, onConfirm }) {
 	const pendingCounter = pendingReminderObject.count;
 
 	const userProfile = '/userProfile';
-	const dashBoard = '/list';
+	const dashBoard = '/';
 	const pending = '/pending';
 
 	return (
@@ -29,7 +29,17 @@ export default function Header({ text, onClose, onConfirm }) {
 						<Button variant="text" color="neutral" onClick={() => navigate(dashBoard)}>
 							Dashboard
 						</Button>
+						<Button variant="text" color="neutral" onClick={() => navigate('/list')}>
+							List
+						</Button>
 					</Typography>
+					<Typography
+						component="h3"
+						variant="h6"
+						color="inherit"
+						noWrap
+						sx={{ flexGrow: 1 }}
+					></Typography>
 					<IconButton color="inherit">
 						{pendingCounter !== false && (
 							<Badge badgeContent={pendingCounter ? pendingCounter : null} color="secondary">

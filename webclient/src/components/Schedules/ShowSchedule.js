@@ -9,6 +9,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	IconButton,
 	Button,
 	DialogContentText,
 } from '@mui/material';
@@ -21,7 +22,7 @@ import {
 import { format } from 'date-fns';
 export default function ShowSchedule({
 	schedule,
-	key,
+
 	editHandler,
 	snoozeOrCompleteHandler,
 	deleteHandler,
@@ -52,17 +53,19 @@ export default function ShowSchedule({
 	useEffect(() => {
 		let expanded = currentSchedule && schedule && currentSchedule.id === schedule.id;
 		setExpand(expanded);
-	}, [currentSchedule]);
+	}, [currentSchedule, schedule]);
 
 	const ExpandedOptions = () => {
 		return (
-			<ListItem key={key} alignItems="flex-start" disablePadding>
+			<ListItem alignItems="flex-start" disablePadding>
 				<ListItemIcon
 					onClick={(e) => {
 						handleEdit(e);
 					}}
 				>
-					<EditIcon />
+					<IconButton>
+						<EditIcon />
+					</IconButton>
 				</ListItemIcon>
 				{schedule.is_pending && (
 					<ListItemIcon
@@ -70,7 +73,9 @@ export default function ShowSchedule({
 							handleSnoozeOrComplete(e);
 						}}
 					>
-						<SnoozeIcon alt="snooze" />
+						<IconButton>
+							<SnoozeIcon alt="snooze" />
+						</IconButton>
 					</ListItemIcon>
 				)}
 
@@ -79,7 +84,9 @@ export default function ShowSchedule({
 						handleDone(e);
 					}}
 				>
-					<DoneIcon alt="done" />
+					<IconButton>
+						<DoneIcon alt="done" />
+					</IconButton>
 				</ListItemIcon>
 
 				<ListItemIcon
@@ -87,7 +94,9 @@ export default function ShowSchedule({
 						setConfirmDelete(true);
 					}}
 				>
-					<DeleteIcon />
+					<IconButton>
+						<DeleteIcon />
+					</IconButton>
 				</ListItemIcon>
 			</ListItem>
 		);
@@ -122,7 +131,6 @@ export default function ShowSchedule({
 	return (
 		<>
 			<ListItem
-				key={key}
 				alignItems="flex-start"
 				onClick={() => {
 					setCurrentSchedule(schedule);

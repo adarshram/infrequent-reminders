@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import ListSet from './ListSet';
 import useReminderSetList from '../../hooks/useReminderSetList';
-import useServerCall from '../../hooks/useServerCall';
+import useReminderDeleteList from '../../hooks/useReminderDeleteList';
 
 import { useNavigate } from 'react-router-dom';
 import { reminderSetListFilled } from '../../models/mocks/reminderSet';
@@ -21,7 +21,7 @@ const tearDown = () => {
 	jest.resetAllMocks();
 };
 jest.mock('../../hooks/useReminderSetList', () => jest.fn());
-jest.mock('../../hooks/useServerCall', () => jest.fn());
+jest.mock('../../hooks/useReminderDeleteList', () => jest.fn());
 
 jest.mock('react-router-dom', () => {
 	return {
@@ -29,17 +29,23 @@ jest.mock('react-router-dom', () => {
 	};
 });
 
-test('shows header and no results', async () => {
+test('shows_header_no_results', async () => {
 	let reminderListData = reminderSetListFilled();
 	useReminderSetList.mockReturnValue([
 		{
 			total: 0,
-			list: [],
+			data: [],
 		},
 		false,
 		false,
 	]);
 	useNavigate.mockReturnValue(() => {});
+	let getAsync = jest.fn();
+	getAsync.mockResolvedValue({
+		success: true,
+	});
+	useReminderDeleteList.mockReturnValue([{ getAsync: getAsync }]);
+
 	await setupDefault();
 
 	let subject = screen.getByText('Reminder Sets');
@@ -47,7 +53,7 @@ test('shows header and no results', async () => {
 
 	subject = screen.getByText('No Reminder Sets');
 	expect(subject).toBeInTheDocument();
-	subject = screen.getByRole('button', { Name: 'Create New Set' });
+	subject = screen.getByRole('button', { name: 'Create New Set' });
 	expect(subject).toBeInTheDocument();
 });
 test('shows results', async () => {
@@ -55,10 +61,13 @@ test('shows results', async () => {
 	useReminderSetList.mockReturnValue([reminderListData, false, false]);
 	let navigateFunction = jest.fn();
 	useNavigate.mockReturnValue((a) => console.log(a));
-	await act(async () => {
-		render(<ListSet />);
-		await wait();
+	let getAsync = jest.fn();
+	getAsync.mockResolvedValue({
+		success: true,
 	});
+	useReminderDeleteList.mockReturnValue([{ getAsync: getAsync }]);
+
+	await setupDefault();
 	let subject = screen.getByText(reminderListData['data'][0].subject, { exact: false });
 	expect(subject).toBeInTheDocument();
 
@@ -66,6 +75,8 @@ test('shows results', async () => {
 	expect(subject).toBeInTheDocument();
 
 	subject = screen.getByText(reminderListData['data'][2].subject, { exact: false });
+	expect(subject).toBeInTheDocument();
+	subject = screen.getByRole('button', { name: /Create New Set/i });
 	expect(subject).toBeInTheDocument();
 });
 test('delete show confirm ', async () => {
@@ -75,14 +86,11 @@ test('delete show confirm ', async () => {
 	getAsync.mockResolvedValue({
 		success: true,
 	});
+	useReminderDeleteList.mockReturnValue([{ getAsync: getAsync }]);
 
-	useServerCall.mockReturnValue([{ getAsync: getAsync }, false, false, false]);
 	let navigateFunction = jest.fn();
 	useNavigate.mockReturnValue(navigateFunction);
-	await act(async () => {
-		render(<ListSet />);
-		await wait();
-	});
+	await setupDefault();
 
 	let deleteIconTest = `delete-${reminderListData['data'][0].id}`;
 	let subject = screen.getByTestId(deleteIconTest);
@@ -131,12 +139,14 @@ test('delete show confirm ', async () => {
 test('shows results and one set detail', async () => {
 	let reminderListData = reminderSetListFilled();
 	useReminderSetList.mockReturnValue([reminderListData, false, false]);
+	let getAsync = jest.fn();
+	getAsync.mockResolvedValue({
+		success: true,
+	});
+	useReminderDeleteList.mockReturnValue([{ getAsync: getAsync }]);
 	let navigateFunction = jest.fn();
 	useNavigate.mockReturnValue(navigateFunction);
-	await act(async () => {
-		render(<ListSet />);
-		await wait();
-	});
+	await setupDefault();
 	let editIconText = `edit-${reminderListData['data'][0].id}`;
 	let subject = screen.getByTestId(editIconText);
 	await act(async () => {
