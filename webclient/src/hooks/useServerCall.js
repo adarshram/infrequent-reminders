@@ -17,8 +17,8 @@ const useServerCall = (endPoint) => {
       setResponse(res.data ? res.data : []);
       setLoading(false);
       return res.data;
-    } catch (e) {
-      setErrors(e.message ? e.message : 'Error Occured');
+    } catch (err) {
+      setErrors(err.response?.data ? err.response.data.message : err.message);
     }
     setLoading(false);
     return false;
@@ -31,7 +31,6 @@ const useServerCall = (endPoint) => {
     } catch (e) {
       throw e;
     }
-    return false;
   };
 
   const get = async (appendEndPoint) => {
@@ -47,8 +46,8 @@ const useServerCall = (endPoint) => {
       setLoading(false);
 
       return res.data;
-    } catch (e) {
-      setErrors(e.message ? e.message : 'Error Occured');
+    } catch (err) {
+      setErrors(err.response?.data ? err.response.data.message : err.message);
     }
     setLoading(false);
     return false;
@@ -59,11 +58,9 @@ const useServerCall = (endPoint) => {
 
       let res = await Axios.get(url);
       return res.data ? res.data : [];
-      return res.data;
-    } catch (e) {
-      throw e;
+    } catch (err) {
+      throw err;
     }
-    return false;
   };
 
   useEffect(() => {

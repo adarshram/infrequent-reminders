@@ -1,23 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { format } from 'date-fns';
 
-import {
-	Box,
-	Typography,
-	Paper,
-	Alert,
-	List,
-	ListItem,
-	ListItemText,
-	IconButton,
-	ListItemIcon,
-	Snackbar,
-} from '@mui/material';
+import { Box, Paper, Alert, List, ListItem, ListItemText, Snackbar } from '@mui/material';
 //Snooze
-import { Snooze as SnoozeIcon, Done as DoneIcon, Edit as EditIcon } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom'; // version 5.2.0
 import useServerCall from '../hooks/useServerCall';
+import ShowSchedule from '../components/Schedules/ShowSchedule';
 import { PendingReminderContext } from '../models/PendingReminderContext';
 
 export default function PendingNotifications(props) {
@@ -26,6 +14,7 @@ export default function PendingNotifications(props) {
 	const pendingReminderObject = useContext(PendingReminderContext);
 
 	const [notificationList, setNotificationList] = useState(false);
+	const [currentSchedule, setCurrentSchedule] = useState(false);
 	const [snackMessage, setSnackMessage] = useState(false);
 	const [
 		pendingNotification,
@@ -33,6 +22,7 @@ export default function PendingNotifications(props) {
 		pendingNotificationError,
 		pendingNotificationLoading,
 	] = useServerCall('/user/notifications/pending');
+	const [deleteNotifications, ,] = useServerCall(`/user/notifications/delete`);
 
 	const [snoozeNotification, , ,] = useServerCall('/user/notifications/snooze/');
 	const [completeNotification, , ,] = useServerCall('/user/notifications/complete/');
@@ -78,11 +68,19 @@ export default function PendingNotifications(props) {
 			pendingReminderObject.load();
 		}
 	};
-	const handlePendingSelect = (notification) => {
-		console.log(notification);
+
+	const handleEdit = (data) => {
+		if (data.id) {
+			navigate(`/create/${data.id}`);
+		}
 	};
 
-	const itemIconStyle = { cursor: 'pointer' };
+	const handleDelete = async (data) => {
+		await deleteNotifications.post({ id: data.id });
+		pendingNotification.get();
+		return true;
+	};
+
 	return (
 		<Box
 			sx={{
@@ -102,61 +100,16 @@ export default function PendingNotifications(props) {
 						notificationList &&
 						notificationList.length > 0 &&
 						notificationList.map((notification, key) => (
-							<ListItem
+							<ShowSchedule
+								schedule={notification}
 								key={key}
-								button
-								onClick={(e) => handlePendingSelect(notification)}
-								alignItems="flex-start"
-								secondaryAction={
-									<IconButton
-										edge="end"
-										aria-label={`actions-${notification.id}`}
-										style={itemIconStyle}
-										onClick={(e) => {
-											handleDone(notification);
-										}}
-									>
-										<DoneIcon />
-									</IconButton>
-								}
-								disablePadding
-							>
-								<ListItemIcon
-									style={itemIconStyle}
-									aria-label={`actions-${notification.id}`}
-									onClick={(e) => {
-										handleSnooze(notification);
-									}}
-								>
-									<SnoozeIcon />
-								</ListItemIcon>
-								<ListItemIcon
-									style={itemIconStyle}
-									onClick={(e) => {
-										navigate(`/create/${notification.id}`);
-									}}
-								>
-									<EditIcon />
-								</ListItemIcon>
-								<ListItemText
-									primary={notification.subject}
-									secondary={
-										<React.Fragment>
-											<Typography
-												sx={{ display: 'flex' }}
-												component="span"
-												variant="body2"
-												color="text.primary"
-											>
-												{notification.description}
-											</Typography>
-											{notification.notification_date
-												? format(new Date(notification.notification_date), 'MM/dd/yyyy')
-												: ''}
-										</React.Fragment>
-									}
-								/>
-							</ListItem>
+								editHandler={handleEdit}
+								snoozeOrCompleteHandler={handleSnooze}
+								deleteHandler={handleDelete}
+								doneHandler={handleDone}
+								setCurrentSchedule={setCurrentSchedule}
+								currentSchedule={currentSchedule}
+							/>
 						))}
 					{!pendingNotificationLoading && (!notificationList || notificationList.length === 0) && (
 						<ListItem>

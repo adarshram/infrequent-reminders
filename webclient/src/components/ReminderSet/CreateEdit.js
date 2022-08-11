@@ -14,9 +14,11 @@ import {
 	IconButton,
 } from '@mui/material';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import SingleReminder from './SingleReminder';
+import ReminderSet from './ReminderSet';
+import TitleDescription from './TitleDescription';
 import useServerCall from '../../hooks/useServerCall';
 import ConfirmDialog from '../ConfirmDialog';
+import LoopReminder from './LoopReminder';
 
 export default function CreateEdit({ reminderData, onSave, successMessage, saveErrors }) {
 	const [title, setTitle] = useState('Create Reminder Set');
@@ -26,13 +28,12 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 		subject: '',
 		description: '',
 		id: false,
+		reminders: [],
 	});
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const [currentReminder, setCurrentReminder] = useState(false);
-
-	const [reminders, setReminders] = useState([]);
 	const [errors, setErrors] = useState([]);
-
+	const { reminders } = formValues;
 	useEffect(() => {
 		if (reminderData) {
 			setTitle(reminderData?.id ? 'Edit Reminder Set' : 'Create Reminder Set');
@@ -40,19 +41,33 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 				subject: reminderData.subject ?? '',
 				description: reminderData.description ?? '',
 				id: reminderData.id ?? false,
+				reminders: reminderData.reminders ?? [],
 			});
-			setReminders(reminderData.reminders ?? []);
 		}
 		if (saveErrors) {
 			setErrors(saveErrors);
 		}
 	}, [reminderData, saveErrors]);
 
-	const editReminder = (changed, key) => {
-		const changedReminders = reminders;
-		changedReminders[key] = changed;
-		setReminders(changedReminders);
+	const setReminders = (value) => {
+		setFormValues((previous) => {
+			let newState = {
+				...previous,
+				reminders: value,
+			};
+			return newState;
+		});
 	};
+
+	const updateFormValues = (value) => {
+		setFormValues((previous) => {
+			let newState = {
+				...previous,
+			};
+			return newState;
+		});
+	};
+
 	const handleChange = (e) => {
 		setFormValues((previous) => {
 			let newState = {
@@ -61,18 +76,6 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 			};
 			return newState;
 		});
-	};
-
-	const removeReminder = async (index) => {
-		let chosenReminder = reminders.filter((reminder, key) => {
-			return key === index;
-		});
-		if (chosenReminder.length && chosenReminder[0].id) {
-			setConfirmDelete(true);
-			setCurrentReminder(chosenReminder[0]);
-			return;
-		}
-		removeReminderFromState(index);
 	};
 
 	const removeReminderFromDb = async (reminder) => {
@@ -114,19 +117,7 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 		setReminders(filteredReminders);
 	};
 
-	const addReminderSet = (e) => {
-		setReminders([
-			...reminders,
-			{
-				subject: 'Enter Subject',
-				description: 'Short Description',
-				notification_date: new Date(),
-				days_after: 2,
-			},
-		]);
-	};
-
-	const saveAllVariables = async (e) => {
+	const onSubmit = async (e) => {
 		if (!validatePage()) {
 			return false;
 		}
@@ -168,6 +159,16 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 		}
 		return validate;
 	};
+	const handleSubmit = (event) => {
+		event.preventDefault();
+
+		const formData = new FormData(event.currentTarget);
+		console.log(formData.entries());
+		const fieldValues = Object.fromEntries(formData.entries());
+		console.log(fieldValues);
+		return false;
+	};
+
 	return (
 		<Box
 			sx={{
@@ -193,78 +194,17 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 					);
 				})}
 				{successMessage && <Alert severity="success">{successMessage}</Alert>}
-
 				<Grid container spacing={2} alignItems="center">
+					<TitleDescription formValues={formValues} setFormValues={setFormValues} />
+					<ReminderSet reminders={formValues.reminders} setReminders={setReminders} />
+
 					<Grid item xs={12}>
-						<TextField
-							required
-							fullWidth
-							id="subject"
-							label="Set Name"
-							name="subject"
-							value={formValues.subject}
-							onChange={handleChange}
-							autoFocus
-						/>
-					</Grid>
-					<Grid item xs={12}>
-						<TextField
-							fullWidth
-							id="content"
-							label="Set Description"
-							name="description"
-							multiline
-							rows={5}
-							value={formValues.description}
-							onChange={handleChange}
-						/>
-					</Grid>
-					{reminders && reminders.length > 0 && (
-						<Grid item xs={12}>
-							<List>
-								{reminders.map((reminder, key) => {
-									return (
-										<ListItem
-											key={key}
-											alignItems="flex-start"
-											secondaryAction={
-												<IconButton
-													edge="end"
-													aria-label={`actions-${key}`}
-													style={itemIconStyle}
-													onClick={(e) => {
-														removeReminder(key);
-													}}
-												>
-													<RemoveCircleIcon />
-												</IconButton>
-											}
-											disablePadding
-										>
-											<SingleReminder
-												reminder={reminder}
-												onChange={(changed) => editReminder(changed, key)}
-												isFirst={key === 0}
-											/>
-										</ListItem>
-									);
-								})}
-							</List>
-						</Grid>
-					)}
-					<Grid item xs={12}>
-						<Button fullWidth variant="text" onClick={addReminderSet}>
-							Add New
+						<Button fullWidth variant="text" onClick={onSubmit}>
+							Save
 						</Button>
 					</Grid>
-					{hasRemindersInRange && (
-						<Grid item xs={12}>
-							<Button fullWidth variant="text" onClick={saveAllVariables}>
-								Save
-							</Button>
-						</Grid>
-					)}
 				</Grid>
+
 				{confirmDelete && (
 					<ConfirmDialog
 						title={'Confirm Deletion'}

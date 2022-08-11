@@ -14,9 +14,19 @@ const usePendingCount = () => {
     }
     if (pendingCountError) {
       console.log(pendingCountError);
+      if (pendingCountError.indexOf('Token') > -1) {
+        setPendingCount(null);
+        return;
+      }
       setPendingCount(0);
     }
   }, [pendingCountResponse, pendingCountError]);
+
+  useEffect(() => {
+    if (pendingCount === null) {
+      pendingCountCaller.get();
+    }
+  }, [pendingCountCaller, pendingCount]);
 
   const reloadPendingCount = () => {
     if (pendingCountLoading === false) {

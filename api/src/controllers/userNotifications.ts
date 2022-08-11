@@ -8,6 +8,8 @@ import {
   snoozeNotification,
   getPendingNotificationCount,
   completeNotification,
+  getNotificationInMonthForUser,
+  getNotificationsForUserByDate,
 } from '../models/UserNotifications';
 import MetaNotificationsClass from '../models/MetaNotifications';
 import { successResponse, errorResponse } from '../responses';
@@ -17,6 +19,22 @@ export const list = async (req: Request, res: Response) => {
   let results = await getNotificationsForUser(fBaseUser.uid);
   successResponse(res, results);
 };
+
+export const listNotificationsForMonth = async (req: Request, res: Response) => {
+  const fBaseUser = res.locals.user;
+  const { month } = req.body;
+  let results = await getNotificationInMonthForUser(fBaseUser.uid, month);
+  successResponse(res, results);
+};
+export const listNotificationsForDate = async (req: Request, res: Response) => {
+  const fBaseUser = res.locals.user;
+  const { date } = req.body;
+
+  let results = await getNotificationsForUserByDate(fBaseUser.uid, new Date(date));
+  //let results = [];
+  successResponse(res, results);
+};
+
 export const show = async (req: Request, res: Response) => {
   const { id } = req.params;
   const fBaseUser = res.locals.user;
@@ -35,7 +53,7 @@ export const show = async (req: Request, res: Response) => {
     };
     successResponse(res, response);
   } catch (err) {
-    errorResponse(res, 'Something Went Wrong');
+    errorResponse(res, err.message ?? 'Something Went Wrong');
   }
 };
 

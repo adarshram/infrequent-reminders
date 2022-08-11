@@ -19,7 +19,10 @@ import {
 } from '../models/GenericModel';
 import { NotificationSetLink } from '../entity/NotificationSetLink';
 import { UserNotifications } from '../entity/UserNotifications';
+import { MetaNotifications } from '../entity/MetaNotifications';
+
 import { deleteNotification } from '../models/UserNotifications';
+
 import {
 	createNotificationsForUser,
 	NotificationObject,
@@ -86,12 +89,13 @@ interface SaveSingleSetParameters {
 	days_after: number;
 	unique_id?: number;
 	set_id: number;
+	complete?: boolean;
 }
 
 export const saveSingleNotificationForSet = async (
 	singleSetData: SaveSingleSetParameters,
 	index: number,
-): Promise<NotificationObject | boolean> => {
+): Promise<NotificationObject> => {
 	let createParameters = {
 		id: singleSetData.id ? singleSetData.id : false,
 		subject: singleSetData.subject,
@@ -99,17 +103,18 @@ export const saveSingleNotificationForSet = async (
 		notification_date: singleSetData.notification_date,
 		user_id: singleSetData.user_id,
 		is_active: index === 0 ? true : false,
-		frequency_type: 'M',
+		frequency_type: 'm',
 		frequency: 12,
 	};
 	const notificationResult = await createNotificationsForUser(createParameters);
 	if (typeof notificationResult !== 'boolean') {
-		let { days_after, set_id } = singleSetData;
+		let { days_after, set_id, complete } = singleSetData;
 		await saveNotificationLink({
 			days_after: days_after,
 			set_id: set_id,
 			order: index + 1,
 			user_notification_id: notificationResult.id,
+			complete: complete ? true : false,
 		});
 	}
 
@@ -119,21 +124,22 @@ interface NotificationLinkParameters {
 	days_after: number;
 	set_id: number;
 	order: number;
+	complete?: boolean;
 	user_notification_id: number;
 }
 
 export const saveNotificationLink = async (
 	singleSetData: NotificationLinkParameters,
 ): Promise<NotificationSetLink> => {
-	let { days_after, set_id, order, user_notification_id } = singleSetData;
+	let { days_after, set_id, order, user_notification_id, complete } = singleSetData;
 	let hasRemoved = await deleteSetLinkByPK(set_id, user_notification_id);
 
 	let notificationSetLink = new NotificationSetLink();
 	notificationSetLink.user_notification_id = user_notification_id;
 	notificationSetLink.set_id = set_id;
 	notificationSetLink.order = order;
+	notificationSetLink.complete = complete ? complete : false;
 	notificationSetLink.days_after = days_after;
-
 	notificationSetLink.created_at = new Date();
 	notificationSetLink.updated_at = new Date();
 	const notificationSetLinkRepository = await getRepository(NotificationSetLink);
@@ -204,11 +210,15 @@ export const getSetById = async (id: number): Promise<NotificationSet> => {
 	let notificationSet = await getById(NotificationSet, id);
 	return notificationSet;
 };
+
 export const getLinkedReminders = async (set_id: number): Promise<UserNotifications[]> => {
-	let notifications = await getRepository(UserNotifications)
-		.createQueryBuilder('user_notifications')
-		.innerJoin('notification_set_link', 'nst', 'nst.user_notification_id = user_notifications.id')
+	let notifications = await getManager()
+		.createQueryBuilder(UserNotifications, 'up')
+		//.innerJoin(NotificationSetLink, 'nst', 'nst.user_notification_id = up.id')
+		.innerJoinAndMapOne('up.link', NotificationSetLink, 'nst', 'nst.user_notification_id = up.id')
+		.leftJoinAndMapOne('up.meta', MetaNotifications, 'meta', 'meta.notification_id = up.id')
 		.where(`set_id = :value`, { value: set_id })
+		.orderBy('nst.order', 'ASC')
 		.getMany();
 	return notifications;
 };

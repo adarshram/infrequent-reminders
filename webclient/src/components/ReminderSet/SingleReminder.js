@@ -1,71 +1,75 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-	Button,
 	TextField,
-	Box,
-	Grid,
-	Typography,
 	Select,
 	MenuItem,
-	Paper,
-	Alert,
-	List,
 	ListItem,
+	ListItemIcon,
 	IconButton,
+	Checkbox,
+	FormGroup,
+	FormControlLabel,
 } from '@mui/material';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import SaveIcon from '@mui/icons-material/Save';
 
+import { DatePicker } from '@mui/x-date-pickers';
+import { LocalizationProvider } from '@mui/x-date-pickers';
 import DateAdapter from '@mui/lab/AdapterDateFns';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
-import DatePicker from '@mui/lab/DatePicker';
-import { format, add } from 'date-fns';
 
-export default function SingleReminder({ reminder, onChange, isFirst }) {
-	const [reminderData, setReminderData] = useState({});
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+export default function SingleReminder({
+	reminderData,
+	onChange,
+	isFirst,
+	handleRemove,
+	toggleComplete,
+	reminderIndex,
+	isCurrentReminder,
+}) {
 	const daysOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-	useEffect(() => {
-		if (onChange && Object.keys(reminderData).length > 0) {
-			onChange(reminderData);
-		}
-	}, [reminderData, onChange]);
-	useEffect(() => {
-		if (reminder) {
-			setReminderData(reminder);
-		}
-	}, [reminder]);
-
-	const handleDateChange = (key, value) => {
-		setReminderData((previous) => {
-			let newState = {
-				...previous,
-				[key]: value,
-			};
-			return newState;
-		});
-	};
+	const handleDateChange = (key, value) => {};
 
 	const handleChange = (e) => {
-		setReminderData((previous) => {
-			let newState = {
-				...previous,
-				[e.target.name]: e.target.value,
-			};
-			return newState;
-		});
+		onChange(e);
+	};
+	const handleRemoveClick = () => {
+		if (handleRemove) {
+			handleRemove(reminderData);
+		}
 	};
 
+	const completeChangeHandler = (e) => {
+		if (toggleComplete) {
+			toggleComplete(e.target.checked);
+		}
+	};
+
+	const isComplete = reminderData.link && reminderData.link.complete;
+
+	const CompletedReminder = () => {
+		return (
+			<ListItem alignItems="flex-start" disablePadding style={{ textDecoration: 'line-through' }}>
+				<FormGroup>
+					<FormControlLabel
+						control={<Checkbox defaultChecked onChange={completeChangeHandler} />}
+						label={reminderData.subject}
+					/>
+				</FormGroup>
+			</ListItem>
+		);
+	};
+	if (isComplete) {
+		return <CompletedReminder />;
+	}
 	return (
-		<>
+		<ListItem alignItems="flex-start" disablePadding>
 			<TextField
 				required
 				fullWidth
 				label="Subject"
-				name="subject"
+				id="subject"
+				name={`subject`}
 				value={reminderData.subject ?? 'Enter Subject'}
 				onChange={handleChange}
-				autoFocus
 			/>
 			{isFirst ? (
 				<LocalizationProvider dateAdapter={DateAdapter}>
@@ -73,7 +77,7 @@ export default function SingleReminder({ reminder, onChange, isFirst }) {
 						label="Enter First Recurring date"
 						value={reminderData.notification_date ?? new Date()}
 						onChange={(value) => handleDateChange('notification_date', value)}
-						name="notification_date"
+						name={`notification_date`}
 						renderInput={(params) => <TextField {...params} />}
 						required
 					/>
@@ -81,10 +85,11 @@ export default function SingleReminder({ reminder, onChange, isFirst }) {
 			) : (
 				<Select
 					labelId="demo-simple-select-label"
-					id="demo-simple-select"
-					value={reminderData.days_after ?? 0}
+					id="days_after"
+					value={reminderData?.link?.days_after ?? 1}
 					label="Remind After"
-					name="days_after"
+					name={`days_after`}
+					id="days_after"
 					onChange={handleChange}
 				>
 					<MenuItem value={0}>After</MenuItem>
@@ -95,6 +100,15 @@ export default function SingleReminder({ reminder, onChange, isFirst }) {
 					))}
 				</Select>
 			)}
-		</>
+			<ListItemIcon
+				onClick={(e) => {
+					handleRemoveClick();
+				}}
+			>
+				<IconButton>
+					<RemoveCircleIcon alt="snooze" />
+				</IconButton>
+			</ListItemIcon>
+		</ListItem>
 	);
 }

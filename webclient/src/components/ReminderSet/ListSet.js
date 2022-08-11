@@ -1,30 +1,22 @@
-import React, { useState, useEffect, useContext, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	Button,
-	TextField,
 	Box,
 	Grid,
 	Typography,
-	Select,
-	MenuItem,
 	Paper,
 	Snackbar,
 	Alert,
 	List,
 	ListItem,
-	IconButton,
 	ListItemButton,
 	ListItemIcon,
 	ListItemText,
 } from '@mui/material';
-import {
-	Snooze as SnoozeIcon,
-	Delete as DeleteIcon,
-	Edit as EditIcon,
-	Done as DoneIcon,
-} from '@mui/icons-material';
+import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import useReminderSetList from '../../hooks/useReminderSetList';
-import useServerCall from '../../hooks/useServerCall';
+import useReminderDeleteList from '../../hooks/useReminderDeleteList';
+
 import ConfirmDialog from '../ConfirmDialog';
 
 import { useNavigate } from 'react-router-dom';
@@ -35,10 +27,11 @@ export default function ListSet() {
 	const [snackMessage, setSnackMessage] = useState(false);
 	const [deleteListSet, setDeleteListSet] = useState(false);
 	const [parameters, setParameters] = useState(null);
-	const [listData, loading, listErrors] = useReminderSetList(parameters);
-	const [deleteCall, , , ,] = useServerCall('/user/reminderSet/deleteSet/');
+	const [listData, ,] = useReminderSetList(parameters);
+	const [deleteCall] = useReminderDeleteList(parameters);
 
 	const navigate = useNavigate();
+
 	useEffect(() => {
 		if (parameters === null) {
 			setParameters({
@@ -67,6 +60,10 @@ export default function ListSet() {
 			setSnackMessage(e?.response?.data?.message ? e.response.data.message : e.message);
 		}
 	};
+	const handleNew = (link) => {
+		navigate('/set/create');
+	};
+
 	const ShowSet = ({ reminder }) => {
 		const handleEdit = () => {
 			navigate(`/set/edit/${reminder.id}`);
@@ -139,14 +136,13 @@ export default function ListSet() {
 							</List>
 						</Grid>
 					)}
-					{listData.total === 0 && (
-						<Grid item xs={12}>
-							No Reminder Sets
-							<Button fullWidth variant="text">
-								Create New Set
-							</Button>
-						</Grid>
-					)}
+
+					<Grid item xs={12}>
+						{listData.total === 0 ? 'No Reminder Sets' : ''}
+						<Button fullWidth variant="text" onClick={handleNew}>
+							Create New Set
+						</Button>
+					</Grid>
 				</Grid>
 				{deleteListSet && (
 					<ConfirmDialog

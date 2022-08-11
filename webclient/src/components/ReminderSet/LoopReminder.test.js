@@ -1,51 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import CreateEdit from './CreateEdit';
-import SingleReminder from './SingleReminder';
+import LoopReminder from './LoopReminder';
 import { Button } from '@mui/material';
-import useServerCall from '../../hooks/useServerCall';
-const setupDefault = async () => {
-	const getAsync = jest.fn();
-	useServerCall.mockReturnValue([
-		{
-			getAsync: getAsync,
-		},
-		false,
-		false,
-	]);
-	getAsync.mockResolvedValue({
-		data: true,
-	});
-	await act(async () => {
-		render(<CreateEdit />);
-	});
-};
-
 const tearDown = () => {
 	jest.resetAllMocks();
 };
-
-jest.mock('../../hooks/useServerCall', () => {
-	return jest.fn();
-});
-jest.mock('./SingleReminder', () => ({ toggleComplete, reminder, isFirst, handleRemove }) => {
-	const toggleValue = () => {
-		toggleComplete(false);
-	};
-	return (
-		<div data-testid="single-reminder">
-			{isFirst && <div data-testid={`is-first-${reminder.id}`}>is first</div>}
-			{reminder.complete && (
-				<a data-testid={`toggle-active-${reminder.id}`} onClick={toggleValue}>
-					Click
-				</a>
-			)}
-			<a data-testid={`RemoveCircleIcon`} onClick={() => handleRemove(reminder)}>
-				Remove
-			</a>
-		</div>
-	);
-});
 
 const wait = async () => {
 	new Promise(function (resolve) {
@@ -131,4 +91,22 @@ const getFakeRemindersForToggle = () => {
 	];
 };
 
-test('show title subject single reminder', async () => {});
+test('click Add New and add stuff', async () => {
+	await act(async () => {
+		render(<LoopReminder />);
+	});
+	let subject = screen.getByRole('button', { name: 'Add New' });
+	expect(subject).toBeInTheDocument();
+	act(() => {
+		fireEvent.click(subject);
+	});
+	act(() => {
+		fireEvent.click(subject);
+	});
+	let textBoxes = screen.queryAllByRole('textbox');
+	act(() => {
+		fireEvent.change(textBoxes[0], { target: { value: '123' } });
+	});
+	textBoxes = screen.queryAllByRole('textbox');
+	console.log(textBoxes[0].value);
+});

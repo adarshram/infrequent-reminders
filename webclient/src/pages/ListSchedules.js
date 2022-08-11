@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom'; // version 5.2.0
 import { UserContext } from '../models/UserContext';
 import useServerCall from '../hooks/useServerCall';
 import ShowSchedule from '../components/Schedules/ShowSchedule';
-
 export default function ListSchedules() {
 	const signedInUser = useContext(UserContext);
 	const user_id = signedInUser?.user?.uid;
@@ -96,26 +95,28 @@ export default function ListSchedules() {
 					bgcolor: 'grey.50',
 				}}
 			>
-				<List>
-					{scheduleLists.length > 0 &&
-						scheduleLists.map((value, key) => (
-							<ShowSchedule
-								schedule={value}
-								key={key}
-								editHandler={handleEdit}
-								snoozeOrCompleteHandler={handleSnoozeOrComplete}
-								deleteHandler={handleDelete}
-								doneHandler={handleDone}
-								setCurrentSchedule={setCurrentSchedule}
-								currentSchedule={currentSchedule}
-							/>
-						))}
-					{scheduleLists.length === 0 && (
-						<ListItem>
-							<ListItemText>No Schedules Found</ListItemText>
-						</ListItem>
-					)}
-				</List>
+				<>
+					<List>
+						{scheduleLists.length > 0 &&
+							scheduleLists.map((value, key) => (
+								<ShowSchedule
+									schedule={value}
+									key={key}
+									editHandler={handleEdit}
+									snoozeOrCompleteHandler={handleSnoozeOrComplete}
+									deleteHandler={handleDelete}
+									doneHandler={handleDone}
+									setCurrentSchedule={setCurrentSchedule}
+									currentSchedule={currentSchedule}
+								/>
+							))}
+						{scheduleLists.length === 0 && (
+							<ListItem>
+								<ListItemText>No Schedules Found</ListItemText>
+							</ListItem>
+						)}
+					</List>
+				</>
 			</Paper>
 		</Box>
 	);
