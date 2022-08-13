@@ -13,9 +13,8 @@ const usePendingCount = () => {
       }
     }
     if (pendingCountError) {
-      console.log(pendingCountError);
-      if (pendingCountError.indexOf('Token') > -1) {
-        setPendingCount(null);
+      let userNotSignedIn = pendingCountError.indexOf('Token') > -1;
+      if (userNotSignedIn) {
         return;
       }
       setPendingCount(0);

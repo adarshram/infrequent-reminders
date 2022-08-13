@@ -5,15 +5,12 @@ import useServerCall from './useServerCall';
 const useCalendarTasksForDay = (parameters) => {
   const [data, setData] = useState(false);
   const [errors, setErrors] = useState([]);
-  const [loading] = useState(false);
-  const [listCall, , , ,] = useServerCall('/user/notifications/listByDate');
+  const [listCall, , , loading] = useServerCall('/user/notifications/listByDate');
   useEffect(() => {
     let mounted = true;
     setData([]);
     if (parameters !== null && parameters?.date) {
       const getResults = async () => {
-        //setData([...calendarMockDataDetails]);
-        //return;
         var results = await listCall.postAsync(parameters);
         if (mounted) {
           if (results.success) {
