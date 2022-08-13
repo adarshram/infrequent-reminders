@@ -22,7 +22,7 @@ function CalendarList({ notificationData, onAction }) {
 	const [calendarData, setCalendarData] = useState([]);
 	const [currentMonth, setCurrentMonth] = useState(null);
 	const [currentDay, setCurrentDay] = useState(null);
-	const [calendarDayResponse, ,] = useCalendarTasksForDay(currentDay);
+	const [calendarDayResponse, dayLoading] = useCalendarTasksForDay(currentDay);
 	const [calendarTaskResponse, ,] = useCalendarTasksForMonth(currentMonth);
 	const [currentCalendarData, setCurrentCalendarData] = useState([]);
 
@@ -40,10 +40,12 @@ function CalendarList({ notificationData, onAction }) {
 		}
 	}, [currentMonth]);
 	useEffect(() => {
-		setCalendarData([]);
+		let data = [];
+
 		if (calendarTaskResponse) {
-			setCalendarData(calendarTaskResponse);
+			data = calendarTaskResponse;
 		}
+		setCalendarData(data);
 	}, [calendarTaskResponse]);
 
 	useEffect(() => {
@@ -54,7 +56,6 @@ function CalendarList({ notificationData, onAction }) {
 	}, [calendarDayResponse]);
 
 	const fetchSchedulesForDate = (day) => {
-		setCurrentCalendarData([]);
 		const currentConvertedDate = format(new Date(day), 'MM/dd/yyyy');
 		const doesHaveTasks = calendarData.find((compareDate) => {
 			const compareConvertedDate = format(new Date(compareDate.notification_date), 'MM/dd/yyyy');
@@ -159,7 +160,13 @@ function CalendarList({ notificationData, onAction }) {
 			}
 			return true;
 		};
-
+		if (dayLoading) {
+			return (
+				<ListItem>
+					<ListItemText>Loading...</ListItemText>
+				</ListItem>
+			);
+		}
 		return (
 			<List>
 				{currentCalendarData.length > 0 &&
@@ -175,7 +182,7 @@ function CalendarList({ notificationData, onAction }) {
 							doneHandler={handleDone}
 						/>
 					))}
-				{currentCalendarData.length === 0 && (
+				{currentCalendarData.length === 0 && !dayLoading && (
 					<>
 						<ListItem>
 							<ListItemText>No Schedules Found</ListItemText>
@@ -196,39 +203,40 @@ function CalendarList({ notificationData, onAction }) {
 
 	return (
 		<LocalizationProvider dateAdapter={AdapterDateFns}>
-			<Grid container spacing={1} alignItems="stretch" justifyContent="center">
-				<Grid item xs={6} lg={6}>
-					<StaticDatePicker
-						orientation="landscape"
-						openTo="day"
-						displayStaticWrapperAs="desktop"
-						value={() => new Date()}
-						fullWidth
-						onChange={(day) => {
-							fetchSchedulesForDate(day);
-						}}
-						onMonthChange={(v) => {
-							onMonthChange(v);
-						}}
-						toolbarTitle=""
-						renderDay={dayRender}
-						renderInput={(props) => (
-							<TextField label="Date1" {...props}>
-								Hello
-							</TextField>
-						)}
-					/>
-				</Grid>
-				<Grid item xs={6} lg={6}>
-					<Paper
-						variant="outlined"
-						sx={{
-							bgcolor: 'grey.50',
-						}}
-					>
-						<DayDataDisplay currentCalendarData={currentCalendarData} />
-					</Paper>
-				</Grid>
+			<Grid item xs={12} lg={6} md={6}>
+				<StaticDatePicker
+					orientation="landscape"
+					openTo="day"
+					displayStaticWrapperAs="desktop"
+					value={() => new Date()}
+					fullWidth
+					onChange={(day) => {
+						fetchSchedulesForDate(day);
+					}}
+					onMonthChange={(v) => {
+						onMonthChange(v);
+					}}
+					toolbarTitle=""
+					renderDay={dayRender}
+					renderInput={(props) => (
+						<TextField label="Date1" {...props}>
+							Hello
+						</TextField>
+					)}
+				/>
+			</Grid>
+			<Grid item xs={12} lg={6} md={6}>
+				<Paper
+					elevation={3}
+					sx={{
+						mt: 2,
+						padding: 1,
+						width: '100%',
+						bgcolor: 'grey.50',
+					}}
+				>
+					<DayDataDisplay currentCalendarData={currentCalendarData} />
+				</Paper>
 			</Grid>
 		</LocalizationProvider>
 	);

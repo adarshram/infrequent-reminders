@@ -31,11 +31,9 @@ export default function DashBoard() {
 				}}
 			>
 				<Paper
-					elevation={3}
 					sx={{
 						mt: 3,
-						padding: 3,
-						width: '90%',
+						width: '100%',
 					}}
 				>
 					{pendingCount > 0 ? (
@@ -51,29 +49,22 @@ export default function DashBoard() {
 		);
 	};
 	return (
-		<Grid container direction="row" justifyContent="center" spacing={1} alignItems="stretch">
-			<PendingCountDisplay />
-			<Grid
-				item
-				xs={12}
+		<>
+			<Grid container direction="row" justifyContent="center" spacing={1} alignItems="center">
+				<PendingCountDisplay />
+			</Grid>
+			<Paper
+				elevation={3}
 				sx={{
-					textAlign: 'center',
-					justifyContent: 'center',
+					mt: 3,
+					padding: 3,
+					width: '100%',
 				}}
 			>
-				<Paper
-					elevation={3}
-					sx={{
-						mt: 3,
-						padding: 3,
-						width: '90%',
-					}}
-				>
-					<>
-						<CalendarList onAction={() => reloadPending()} />
-					</>
-				</Paper>
-			</Grid>
-		</Grid>
+				<Grid container>
+					<CalendarList onAction={() => reloadPending()} />
+				</Grid>
+			</Paper>
+		</>
 	);
 }

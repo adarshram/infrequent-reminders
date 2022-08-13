@@ -26,9 +26,12 @@ const useServerCall = (endPoint) => {
 
   const postAsync = async (parameters) => {
     try {
+      setLoading(true);
       let res = await Axios.post(endPoint, parameters);
+      setLoading(false);
       return res.data ? res.data : [];
     } catch (e) {
+      setLoading(false);
       throw e;
     }
   };
@@ -55,10 +58,12 @@ const useServerCall = (endPoint) => {
   const getAsync = async (appendEndPoint) => {
     try {
       let url = appendEndPoint ? `${endPoint}${appendEndPoint}` : endPoint;
-
+      setLoading(true);
       let res = await Axios.get(url);
+      setLoading(false);
       return res.data ? res.data : [];
     } catch (err) {
+      setLoading(false);
       throw err;
     }
   };
