@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
 	TextField,
 	Select,
@@ -89,7 +89,6 @@ export default function SingleReminder({
 					value={reminderData?.link?.days_after ?? 1}
 					label="Remind After"
 					name={`days_after`}
-					id="days_after"
 					onChange={handleChange}
 				>
 					<MenuItem value={0}>After</MenuItem>

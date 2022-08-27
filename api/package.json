@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@google-cloud/functions-framework": "^3.1.2",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.1.0",
     "nodemon": "^2.0.19",

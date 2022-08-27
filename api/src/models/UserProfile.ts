@@ -1,6 +1,7 @@
-import { getRepository, getManager } from 'typeorm';
+import { getRepository, getManager, MoreThanOrEqual } from 'typeorm';
 
 import { UserProfile } from '../entity/UserProfile';
+import { UserNotificationPreference } from '../entity/UserNotificationPreference';
 import { getMessagingObject, addToCollection, getFireStoreDbObject } from '../utils/firebase';
 
 export const getUserProfileWithId = async (id: string) => {
@@ -11,6 +12,44 @@ export const getUserProfileWithId = async (id: string) => {
 		.getOne();
 
 	return userProfile;
+};
+export const getUsersWithNotificationPreference = async (): Promise<
+	UserNotificationPreference[]
+> => {
+	let user_notification_preferences = await getRepository(UserNotificationPreference).find({
+		where: { user_id: MoreThanOrEqual(1) },
+	});
+	return user_notification_preferences;
+};
+export const getNotificationPreferenceForUser = async (
+	user_id: string,
+): Promise<UserNotificationPreference> => {
+	let user_notification_preference = await getRepository(UserNotificationPreference).findOne({
+		where: { user_id: user_id },
+	});
+	return user_notification_preference;
+};
+
+const saveVapidKeyToDb = async (user_id: string, vapidKey: string[]) => {
+	await deleteNotificationPreferenceForUser(user_id);
+	let user_notification_preference = new UserNotificationPreference();
+	user_notification_preference.user_id = user_id as string;
+	user_notification_preference.vapidkeys = JSON.stringify(vapidKey);
+	user_notification_preference.email = '';
+	user_notification_preference.created_at = new Date();
+	user_notification_preference.updated_at = new Date();
+	await getRepository(UserNotificationPreference).save(user_notification_preference);
+};
+
+const deleteNotificationPreferenceForUser = async (user_id: string) => {
+	let user_notification_preference = await getNotificationPreferenceForUser(user_id);
+	if (user_notification_preference) {
+		let deleted = await getRepository(UserNotificationPreference).remove(
+			user_notification_preference,
+		);
+		return true;
+	}
+	return false;
 };
 
 export const saveVapidKeyForUser = async (fireBaseRefId: string, vapidKey: string) => {
@@ -37,7 +76,7 @@ export const saveVapidKeyForUser = async (fireBaseRefId: string, vapidKey: strin
 		},
 		vapidKeyData ? vapidKeyData.id : false,
 	);
-
+	await saveVapidKeyToDb(fireBaseRefId, updatedVapidKeys);
 	return true;
 };
 
@@ -73,6 +112,7 @@ export const getVapidKeysForUser = async (fireBaseRefId: string) => {
 	let vapidKey: VKeys;
 	snapshot.forEach((doc) => {
 		let data = doc.data();
+
 		vapidKey = {
 			vapidKeys: data.vapidKeys,
 			id: doc.id,
@@ -82,13 +122,20 @@ export const getVapidKeysForUser = async (fireBaseRefId: string) => {
 	return vapidKey;
 };
 
+export const deleteVapidKeyDocument = async (id: string) => {
+	const db = getFireStoreDbObject();
+	const vapidKeyObject = db.collection('UserVapidKeys');
+	const docToDelete = await vapidKeyObject.doc(id).get();
+	await docToDelete.ref.delete();
+};
+
 export const deleteVapidKeyForUser = async (fireBaseRefId: string, vapidKey: string) => {
 	const vapidKeyData = await getVapidKeysForUser(fireBaseRefId);
 
 	if (!vapidKeyData) {
-		console.log('yo yo');
 		return false;
 	}
+
 	let hasVapidKey = false;
 	if (vapidKeyData.vapidKeys.indexOf(vapidKey) > -1) {
 		hasVapidKey = true;
@@ -101,6 +148,14 @@ export const deleteVapidKeyForUser = async (fireBaseRefId: string, vapidKey: str
 		const hasMatched = currentKey == vapidKey;
 		return !hasMatched;
 	});
+
+	let hasNoVapidKeys = updatedVapidKeys.length == 0;
+	if (hasNoVapidKeys) {
+		await deleteVapidKeyDocument(vapidKeyData.id);
+		await deleteNotificationPreferenceForUser(fireBaseRefId);
+		return true;
+	}
+
 	let res = await addToCollection(
 		'UserVapidKeys',
 		{
@@ -109,4 +164,51 @@ export const deleteVapidKeyForUser = async (fireBaseRefId: string, vapidKey: str
 		vapidKeyData.id,
 	);
 	return res;
+};
+
+export const sendNotificationToVapidKey = async (vapidKey, notification) => {
+	let messsagingObject = await getMessagingObject();
+	let { id, user_id, subject, notification_date } = notification;
+	let notificationMessage = `Your reminder ${subject} is due today`;
+	let success = false;
+	let errors = [];
+	const message = {
+		notification: {
+			title: 'You have a Notification',
+			body: notificationMessage,
+		},
+		webpush: {
+			fcm_options: {
+				link: `http://localhost:3006/create/${id}`,
+			},
+		},
+		token: vapidKey,
+	};
+	try {
+		let sendResults = await messsagingObject.send(message);
+		success = true;
+		return { success: success, errors: errors };
+	} catch (err) {
+		const isTokenUnregistered =
+			err.errorInfo && err.errorInfo.code === 'messaging/registration-token-not-registered';
+		if (isTokenUnregistered) {
+			let res = await deleteVapidKeyForUser(user_id, vapidKey);
+			if (res) {
+				console.log(`Deleted Vapid Key ${vapidKey}`);
+				success = false;
+				errors = ['Token Not Registered'];
+				return { success: success, errors: errors };
+			}
+		}
+
+		const isTokenInvalid = err.errorInfo && err.errorInfo.code === 'messaging/invalid-argument';
+		if (isTokenInvalid) {
+			success = false;
+			errors = ['Invalid Token'];
+			return { success: success, errors: errors };
+		}
+		success = false;
+		errors = [err?.errorInfo?.message ?? 'Unknown Error'];
+		return { success: success, errors: errors };
+	}
 };

@@ -19,8 +19,13 @@ export default function UserProfile() {
 	const signedInUser = useContext(UserContext);
 	const [profileCaller, profileData, profileError, profileLoading] = useServerCall('/user/profile');
 	const [saveProfile, , ,] = useServerCall('/user/profile/save');
-	const [currentStatus, enableNotification, disableNofitication, notificationLoading] =
-		useNotificationPreference(signedInUser.user);
+	const [
+		currentStatus,
+		enableNotification,
+		disableNofitication,
+		notificationLoading,
+		notificationErrors,
+	] = useNotificationPreference(signedInUser.user);
 	const [formValues, setFormValues] = useState({
 		first_name: '',
 		last_name: '',
@@ -153,6 +158,14 @@ export default function UserProfile() {
 							</Alert>
 						);
 					})}
+					{notificationErrors.map((err, key) => {
+						return (
+							<Alert key={key} severity="error">
+								{err}
+							</Alert>
+						);
+					})}
+
 					{messages.map((message, key) => {
 						return (
 							<Alert key={key} severity="info">
@@ -160,6 +173,7 @@ export default function UserProfile() {
 							</Alert>
 						);
 					})}
+					{!currentStatus && <Alert severity="info">Notifications Not Enabled</Alert>}
 
 					<Grid container spacing={2}>
 						<Grid item xs={12}>

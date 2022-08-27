@@ -1,29 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
-import {
-	Button,
-	TextField,
-	Box,
-	Grid,
-	Typography,
-	Select,
-	MenuItem,
-	Paper,
-	Alert,
-	List,
-	ListItem,
-	IconButton,
-} from '@mui/material';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+import React, { useState, useEffect } from 'react';
+import { Button, Box, Grid, Typography, Paper, Alert } from '@mui/material';
+
 import ReminderSet from './ReminderSet';
 import TitleDescription from './TitleDescription';
 import useServerCall from '../../hooks/useServerCall';
 import ConfirmDialog from '../ConfirmDialog';
-import LoopReminder from './LoopReminder';
 
 export default function CreateEdit({ reminderData, onSave, successMessage, saveErrors }) {
 	const [title, setTitle] = useState('Create Reminder Set');
 	const [deleteReminderSet, , ,] = useServerCall(`/user/reminderSet/deleteNotification/`);
-	const itemIconStyle = { cursor: 'pointer' };
+
 	const [formValues, setFormValues] = useState({
 		subject: '',
 		description: '',
@@ -59,25 +45,6 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 		});
 	};
 
-	const updateFormValues = (value) => {
-		setFormValues((previous) => {
-			let newState = {
-				...previous,
-			};
-			return newState;
-		});
-	};
-
-	const handleChange = (e) => {
-		setFormValues((previous) => {
-			let newState = {
-				...previous,
-				[e.target.name]: e.target.value,
-			};
-			return newState;
-		});
-	};
-
 	const removeReminderFromDb = async (reminder) => {
 		try {
 			let deleted = await deleteReminderSet.getAsync(reminder.id);
@@ -96,12 +63,6 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 			return;
 		}
 		let index = false;
-		let filteredReminders = reminders.filter((currentReminder, key) => {
-			if (currentReminder.id === reminder.id) {
-				index = key;
-				return key;
-			}
-		});
 
 		if (index !== false) {
 			removeReminderFromState(index);
@@ -127,8 +88,6 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 			reminders,
 		});
 	};
-
-	let hasRemindersInRange = reminders.length > 0 && reminders.length <= 10;
 
 	const validatePage = () => {
 		let validate = true;
@@ -158,15 +117,6 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 			validate = false;
 		}
 		return validate;
-	};
-	const handleSubmit = (event) => {
-		event.preventDefault();
-
-		const formData = new FormData(event.currentTarget);
-		console.log(formData.entries());
-		const fieldValues = Object.fromEntries(formData.entries());
-		console.log(fieldValues);
-		return false;
 	};
 
 	return (

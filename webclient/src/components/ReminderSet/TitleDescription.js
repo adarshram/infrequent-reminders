@@ -1,17 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
-import {
-	Button,
-	TextField,
-	Box,
-	Grid,
-	Typography,
-	Paper,
-	Alert,
-	List,
-	ListItem,
-	IconButton,
-} from '@mui/material';
-import { ReminderSetContext } from './ReminderSetContext';
+import React from 'react';
+import { TextField, Grid } from '@mui/material';
+
 export default function TitleDescription({ formValues, setFormValues }) {
 	const handleChange = (e) => {
 		let newFormValues = {
@@ -20,8 +9,6 @@ export default function TitleDescription({ formValues, setFormValues }) {
 		};
 		setFormValues(newFormValues);
 	};
-
-	const onSave = () => {};
 
 	return (
 		<>
