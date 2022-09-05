@@ -1,10 +1,23 @@
 import { calculateSnoozeDate, calculateNextNotification } from './../src/utils/dateManipulators';
-
+import { createConnection } from 'typeorm';
 import { expect } from 'chai';
 import 'mocha';
+describe('dbConnection', () => {
+  it('dbConnection', async () => {
+    let results = await createConnection({
+      type: 'postgres',
+      url: 'postgres://postgres:192.168.5.129@localhost:5432/infrequent-scheduler',
+      entities: ['src/entity/*.ts'],
+      ssl: false,
+      connectTimeoutMS: 20,
+    });
+    console.log(results);
+  }).timeout(10000);
+});
 
 describe('should give snooze date', () => {
   it('week snooze date', () => {
+    console.log(process.env.DATABASE_URL);
     const result = calculateSnoozeDate(new Date(), 2, 'w');
     expect(result.days).to.equal(2);
   });

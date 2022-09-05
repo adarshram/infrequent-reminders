@@ -4,7 +4,7 @@ import {
   deleteById,
   deleteByColumn,
   whereByColumns,
-} from './../../src/models/genericModel';
+} from './../../src/models/GenericModel';
 import { UserNotifications } from './../../src/entity/UserNotifications';
 import { NotificationSet } from './../../src/entity/NotificationSet';
 import {
@@ -13,6 +13,7 @@ import {
   getFireStoreDbObject,
   initializeFireBase,
 } from './../../src/utils/firebase';
+import { establishDatabaseConnection } from './../../src/utils/dataBase';
 import {
   deleteNotification,
   getNotificationById,
@@ -40,7 +41,7 @@ import { createConnection } from 'typeorm';
 import { getTime } from 'date-fns';
 //npm test test\models\UserProfileTest.ts -- --grep "gets users with preferences"
 before(async () => {
-  await createConnection();
+  await establishDatabaseConnection();
   await initializeFireBase();
 });
 
