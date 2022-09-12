@@ -8,7 +8,7 @@ import { getFirebaseCredentials } from '../models/SystemCredentials';
 
 let fireBase = undefined;
 let fireStoreDbObject: boolean | any;
-const initializeFireBase = async () => {
+export const initializeFireBase = async () => {
   const serviceAccount = await getFirebaseCredentials();
   let serviceAccount1 = serviceAccount as unknown as string;
 

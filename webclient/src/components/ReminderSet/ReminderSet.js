@@ -1,26 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
-import {
-	Button,
-	TextField,
-	Box,
-	Grid,
-	Typography,
-	Paper,
-	Alert,
-	List,
-	ListItem,
-	IconButton,
-} from '@mui/material';
-
+import React, { useState, useEffect } from 'react';
 import SingleReminder from './SingleReminder';
+
+import { Button, Grid, List } from '@mui/material';
 export default function ReminderSet({ reminders, setReminders, showSave }) {
-	const [confirmDelete, setConfirmDelete] = useState(false);
 	const [dateKey, setDateKey] = useState(0);
-	const [currentReminder, setCurrentReminder] = useState(false);
+
 	const editReminder = (e, key) => {
 		const changedReminders = [...reminders];
 		changedReminders[key][e.target.id] = e.target.value;
-		setCurrentReminder(key);
+
 		setReminders(changedReminders);
 	};
 
@@ -40,8 +28,6 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 			return key === index;
 		});
 		if (chosenReminder.length && chosenReminder[0].id) {
-			setConfirmDelete(true);
-			setCurrentReminder(chosenReminder[0]);
 			return;
 		}
 
@@ -88,12 +74,6 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 		});
 		setReminders(filteredReminders);
 	};
-	const handleChange = (e, key) => {
-		const changedReminders = [...reminders];
-		changedReminders[key][e.target.id] = e.target.value;
-		setReminders(changedReminders);
-	};
-
 	return (
 		<>
 			{reminders && reminders.length > 0 && (

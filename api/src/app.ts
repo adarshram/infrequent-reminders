@@ -13,7 +13,7 @@ const initializeApp = async (): Promise<void> => {
 
 	// register routes
 	app.get('/', function (req: Request, res: Response) {
-		res.send('Hello World1');
+		res.send('Hello World1211!');
 	});
 	try {
 		attachPrivateRoutes(app);

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-//import { reminderSetListFilled } from '../models/mocks/reminderSet';
 import useServerCall from './useServerCall';
-//import { calendarMockDataDetails } from '../components/Schedules/calendarMockData';
 const useCalendarTasksForDay = (parameters) => {
   const [data, setData] = useState(false);
   const [errors, setErrors] = useState([]);

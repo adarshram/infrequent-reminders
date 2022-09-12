@@ -49,10 +49,12 @@ function CalendarList({ notificationData, onAction }) {
 	}, [calendarTaskResponse]);
 
 	useEffect(() => {
-		setCurrentCalendarData([]);
+		let calendarDayData = [];
 		if (calendarDayResponse && calendarDayResponse.length > 0) {
-			setCurrentCalendarData(calendarDayResponse);
+			calendarDayData = calendarDayResponse;
 		}
+
+		setCurrentCalendarData(calendarDayData);
 	}, [calendarDayResponse]);
 
 	const fetchSchedulesForDate = (day) => {
