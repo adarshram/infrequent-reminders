@@ -7,6 +7,8 @@ import {
 } from './../../src/models/genericModel';
 import { UserNotifications } from './../../src/entity/UserNotifications';
 import { NotificationSet } from './../../src/entity/NotificationSet';
+import { UserNotificationPreference } from './../../src/entity/UserNotificationPreference';
+
 import {
   getMessagingObject,
   addToCollection,
@@ -33,14 +35,21 @@ import {
   deleteVapidKeyForUser,
   getUsersWithNotificationPreference,
   getVapidKeysForUser,
+  getUserProfileWithId,
 } from './../../src/models/UserProfile';
-import { sendNotificationToVapidKey, runDailyCron } from './../../src/scripts/dailyUpdates';
+import {
+  sendNotificationMessageToVapidKey,
+  runDailyCron,
+  handleEmailNotificationForUser,
+} from './../../src/scripts/dailyUpdates';
 
 import { expect } from 'chai';
 import 'mocha';
 import { createConnection } from 'typeorm';
 import { getTime } from 'date-fns';
 //npm test test\scripts\dailyUpdatesTest.ts -- --grep "runs the daily cron"
+//npm test test\scripts\dailyUpdatesTest.ts -- --grep "sends the user email"
+
 before(async () => {
   await createConnection();
   await initializeFireBase();
@@ -91,6 +100,17 @@ describe('send notification handlers', () => {
     await runDailyCron();
   }).timeout(20000);
 
+  it('sends the user email when no vapid key is found', async () => {
+    let notificationPreference = await getRepository(UserNotificationPreference)
+      .createQueryBuilder('up')
+      .where(`id != :value`, { value: 1 })
+      .getOne();
+
+    if (!notificationPreference.email || notificationPreference.email === '') {
+      let results = await handleEmailNotificationForUser(notificationPreference.user_id);
+    }
+  }).timeout(20000);
+
   it('sends notification to the first user for testing ', async () => {
     const db = getFireStoreDbObject();
 
@@ -112,7 +132,7 @@ describe('send notification handlers', () => {
     };
 
     let notification = await createNotificationsForUser(notificationParameters);
-    await sendNotificationToVapidKey(vapidKeys[0], notification);
+    await sendNotificationMessageToVapidKey(vapidKeys[0], notification);
     //cleanup
     await deleteNotificationsForUser(notificationParameters.user_id);
   });

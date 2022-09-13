@@ -1,4 +1,5 @@
 import { createConnection, getRepository, getManager } from 'typeorm';
+
 import { format, differenceInCalendarDays, subDays } from 'date-fns';
 import { NotificationObject } from '../models/UserNotifications';
 import {
@@ -6,6 +7,8 @@ import {
 	deleteVapidKeyForUser,
 	getUsersWithNotificationPreference,
 	getVapidKeysForUser,
+	getUserProfileWithId,
+	getNotificationPreferenceForUser,
 } from '../models/UserProfile';
 import { calculateSnoozeDate, calculateNextNotification } from '../utils/dateManipulators';
 import { getMessagingObject } from '../utils/firebase';
@@ -17,11 +20,23 @@ export const runDailyCron = async () => {
 	let sendLog = [];
 	let notificationSendLog = await Promise.all(
 		users.map(async (user) => {
-			let notificationSent = await handleDayNotificationsForUser(user);
-
+			let notificationSent = await handleVapidKeyNotificationForUser(user);
+			if (notificationSent) {
+				return {
+					user_id: user.user_id,
+					notification_sent: notificationSent,
+				};
+			}
+			if (!notificationSent) {
+				notificationSent = await handleEmailNotificationForUser(user.user_id);
+				return {
+					user_id: user.user_id,
+					notification_sent: notificationSent,
+				};
+			}
 			return {
 				user_id: user.user_id,
-				notification_sent: notificationSent,
+				notification_sent: false,
 			};
 		}),
 	);
@@ -29,9 +44,13 @@ export const runDailyCron = async () => {
 	return notificationSendLog;
 };
 
-const handleDayNotificationsForUser = async (user) => {
-	let vapidKeyData = await getVapidKeysForUser(user.user_id);
+const handleVapidKeyNotificationForUser = async (user): Promise<boolean> => {
 	let pending = await getPendingNotifications(user.user_id);
+	if (pending.length === 0) {
+		return true;
+	}
+
+	let vapidKeyData = await getVapidKeysForUser(user.user_id);
 	let notificationSubject = `You have ${pending.length} Reminders overdue`;
 	if (pending.length == 1) {
 		notificationSubject = `Your Reminder ${pending[0].subject} is overdue`;
@@ -98,123 +117,68 @@ export const sendNotificationMessageToVapidKey = async (vapidKey, notificationMe
 	}
 	return { success, errors };
 };
-export const sendNotificationToVapidKey = async (vapidKey, notification) => {
-	let messsagingObject = await getMessagingObject();
-	let { id, user_id, subject, notification_date } = notification;
-	let notificationMessage = `Your ${subject} is due today`;
-	const message = {
-		data: {
-			notificationMessage: 'Hello',
-		},
-		notification: {
-			title: 'You have a Notification',
-			body: notificationMessage,
-		},
-		webpush: {
-			fcm_options: {
-				link: `http://localhost:3006/create/${id}`,
-			},
-		},
-		token: vapidKey,
-	};
-	try {
-		let sendResults = await messsagingObject.send(message);
+
+export const handleEmailNotificationForUser = async (user_id: string): Promise<boolean> => {
+	let pending = await getPendingNotifications(user_id);
+	if (pending.length === 0) {
 		return true;
-	} catch (err) {
-		const isTokenUnregistered =
-			err.errorInfo && err.errorInfo.code === 'messaging/registration-token-not-registered';
-		if (isTokenUnregistered) {
-			let res = await deleteVapidKeyForUser(user_id, vapidKey);
-			if (res) {
-				console.log(`Deleted Vapid Key ${vapidKey}`);
-				return true;
-			}
-		}
-		console.log(err);
-		return false;
 	}
+
+	let sendEmail = '';
+	let notificationPreference = await getNotificationPreferenceForUser(user_id);
+	sendEmail =
+		notificationPreference.email && notificationPreference.email != ''
+			? notificationPreference.email
+			: '';
+	if (sendEmail === '') {
+		let userProfile = await getUserProfileWithId(user_id);
+		if (!userProfile.email) {
+			return false;
+		}
+		sendEmail = userProfile.email;
+	}
+
+	let notificationSubject = `You have ${pending.length} Reminders overdue`;
+	if (pending.length == 1) {
+		notificationSubject = `Your Reminder ${pending[0].subject} is overdue`;
+	}
+	let { success, errors } = await sendNotificationEmail(sendEmail, notificationSubject);
+	return success;
 };
 
-/*export class DailyUpdates {
-	run = async () => {
-		await createConnection();
-		let notificationObject = NotificationObject();
-		let pendingNotifications = await notificationObject.pendingNotifications();
+export const sendNotificationEmail = async (email: string, notificationMessage: string) => {
+	let nodemailer = require('nodemailer');
+	let subject = notificationMessage;
+	let body = notificationMessage;
+	let transporter = nodemailer.createTransport({
+		host: 'smtp.sendgrid.net',
+		port: 465,
+		secure: true,
+		auth: {
+			user: 'apikey',
+			pass: process.env.SENDGRIDPASSWORD ?? '',
+		},
+	});
+	let success = false;
+	let errors = [];
+	let mailOptions = {
+		from: 'adarsh.developer@gmail.com',
+		to: email,
+		subject: notificationMessage,
+		text: notificationMessage,
+	};
 
-		if (pendingNotifications.total > 0) {
-			pendingNotifications.data.map(async (notification) => {
-				await this.sendNotificationToUser(notification);
-				let snoozeResults = await this.updateSnoozeLog(notification);
-				let snoozedNotification = this.getSnoozedNotification(notification);
-				await notificationObject.saveNotification(snoozedNotification);
-			});
+	transporter.sendMail(mailOptions, function (error, info) {
+		if (error) {
+			success = false;
+			errors.push(error);
+			console.log(error);
+		} else {
+			console.log('Email sent: ' + info.response);
+			success = true;
+			error = [];
 		}
-	};
+	});
 
-	updateSnoozeLog = async (notification) => {
-		let metaObject = new MetaNotificationsClass();
-		metaObject.setUserId(notification.user_id);
-		let results = await metaObject.updateCronSnooze(notification.id);
-		return results;
-	};
-
-	sendNotificationToUser = async (notification) => {
-		let { user_id } = notification;
-		let vapidKeyData = await getVapidKeysForUser(user_id);
-		if (!vapidKeyData) {
-			return false;
-		}
-		if (!vapidKeyData.vapidKeys.length) {
-			return false;
-		}
-
-		vapidKeyData.vapidKeys.map(async (vapidKey) => {
-			await this.sendNotificationToVapidKey(vapidKey, notification);
-		});
-	};
-
-	sendNotificationToVapidKey = async (vapidKey, notification) => {
-		let messsagingObject = await getMessagingObject();
-		let { id, user_id, subject, notification_date } = notification;
-		let notificationMessage = `Your ${subject} is due today`;
-		const message = {
-			data: {
-				notificationMessage: 'Hello',
-			},
-			notification: {
-				title: 'You have a Notification',
-				body: notificationMessage,
-			},
-			webpush: {
-				fcm_options: {
-					link: `http://localhost:3006/create/${id}`,
-				},
-			},
-			token: vapidKey,
-		};
-		try {
-			let sendResults = await messsagingObject.send(message);
-			return true;
-		} catch (err) {
-			const isTokenUnregistered =
-				err.errorInfo && err.errorInfo.code === 'messaging/registration-token-not-registered';
-			if (isTokenUnregistered) {
-				let res = await deleteVapidKeyForUser(user_id, vapidKey);
-				if (res) {
-					console.log(`Deleted Vapid Key ${vapidKey}`);
-					return true;
-				}
-			}
-			console.log(err);
-			return false;
-		}
-	};
-
-	getSnoozedNotification = (notification) => {
-		let { frequency_type, frequency, notification_date } = notification;
-		let snoozeDateResult = calculateSnoozeDate(notification_date, frequency, frequency_type);
-		notification.notification_date = snoozeDateResult.date;
-		return notification;
-	};
-}
-*/
+	return { success, errors };
+};

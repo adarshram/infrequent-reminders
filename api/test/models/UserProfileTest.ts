@@ -35,6 +35,7 @@ import {
   getNotificationPreferenceForUser,
   getUsersWithNotificationPreference,
 } from './../../src/models/UserProfile';
+import { UserProfile } from './../../src/entity/UserProfile';
 import { expect } from 'chai';
 import 'mocha';
 import { createConnection } from 'typeorm';
@@ -124,5 +125,10 @@ describe('send notification handlers', () => {
 
     users = await getUsersWithNotificationPreference();
     expect(users.length).to.be.below(newLength);
+  }).timeout(10000);
+
+  it('gets user email', async () => {
+    let randomUserProfile = await getRepository(UserProfile).findOne();
+    console.log(randomUserProfile);
   }).timeout(10000);
 });
