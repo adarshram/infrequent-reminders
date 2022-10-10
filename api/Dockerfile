@@ -10,7 +10,6 @@ RUN echo "0       8       *       *       *       cd /app && npx ts-node --trans
 RUN crontab crontab_new
 RUN rm crontab_new
 RUN chmod 755 entrypoint.sh
-#CMD ["nodemon","-L"]
 CMD ["./entrypoint.sh"]
 
 
