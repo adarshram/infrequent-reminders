@@ -5,6 +5,7 @@ import {
   getNotificationById,
   deleteNotification,
   getPendingNotifications,
+  getNotificationsForThisWeek,
   snoozeNotification,
   getPendingNotificationCount,
   completeNotification,
@@ -97,6 +98,17 @@ export const pendingNotifications = async (req: Request, res: Response) => {
     return;
   }
   errorResponse(res, 'No Pending Notifications');
+};
+
+export const upcomingNotifications = async (req: Request, res: Response) => {
+  const fBaseUser = res.locals.user;
+  let results = await getNotificationsForThisWeek(fBaseUser.uid);
+  console.log(results);
+  if (results.length) {
+    successResponse(res, results);
+    return;
+  }
+  errorResponse(res, 'No Notifications for this week');
 };
 
 export const pendingNotificationCount = async (req: Request, res: Response) => {

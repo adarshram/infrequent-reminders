@@ -1,4 +1,12 @@
-import { getRepository, getManager } from 'typeorm';
+import {
+	getRepository,
+	getManager,
+	MoreThan,
+	LessThan,
+	MoreThanOrEqual,
+	LessThanOrEqual,
+	Between,
+} from 'typeorm';
 import {
 	format,
 	differenceInDays,
@@ -289,11 +297,52 @@ const generatePendingNotificationQuery = (
 	return notificationsQuery;
 };
 
-export const getPendingNotifications = async (user_id: string): Promise<NotificationObject[]> => {
-	const userNotificationsRepository = await getRepository(UserNotifications);
-	const query = generatePendingNotificationQuery(userNotificationsRepository, user_id);
-	const notifications = await query.getMany();
+export const getUsersWithPendingNotifications = async () => {
+	let today = new Date();
+	let beforeHalfYear = subDays(today, 180);
+	let notificationsQuery = await getRepository(UserNotifications)
+		.createQueryBuilder('up')
+		.where('up.notification_date >= :startDate', { startDate: beforeHalfYear })
+		.andWhere('up.notification_date <= :endDate', { endDate: today })
+		.andWhere('up.is_active = :is_active', { is_active: 1 })
+		.select('up.user_id as distinct_user_id')
+		.distinct(true);
+	const distinctUsers = await notificationsQuery.getRawMany();
+	let distinctUserIds = distinctUsers.map((result) => {
+		return result.distinct_user_id;
+	});
+	return distinctUserIds;
+};
 
+export const getPendingNotifications = async (user_id: string): Promise<UserNotifications[]> => {
+	let today = new Date();
+	let beforeHalfYear = subDays(today, 180);
+
+	let notifications = await getRepository(UserNotifications).find({
+		relations: ['meta_notifications'],
+		where: {
+			notification_date: Between(beforeHalfYear, today),
+			user_id: user_id,
+			is_active: 1,
+		},
+	});
+	return notifications;
+};
+
+export const getNotificationsForThisWeek = async (
+	user_id: string,
+): Promise<UserNotifications[]> => {
+	let today = new Date();
+	let nextWeek = addDays(today, 7);
+
+	let notifications = await getRepository(UserNotifications).find({
+		relations: ['meta_notifications'],
+		where: {
+			notification_date: Between(today, nextWeek),
+			user_id: user_id,
+			is_active: 1,
+		},
+	});
 	return notifications;
 };
 
@@ -318,16 +367,42 @@ export const snoozeNotification = async (
 	user_id: string,
 ): Promise<DateReturn | boolean> => {
 	let notification = await getNotificationById(id, user_id);
-	let { frequency_type, frequency, notification_date } = notification;
+	let { notification_date } = notification;
+	let todayAfterNotificationDate = compareAsc(new Date(), notification_date) === 1;
+	let todayBeforeNotificationDate = compareAsc(new Date(), notification_date) === -1;
+
 	//notification date should be before today to snooze as you dont snooze in the future
-	if (compareAsc(new Date(), notification_date) === -1) {
+	if (todayBeforeNotificationDate) {
 		return false;
 	}
-	let snoozeDateResult = calculateSnoozeDate(notification_date, frequency, frequency_type);
+	return await snoozeNotificationObject(notification, false);
+};
+
+export const snoozeNotificationObject = async (
+	notification: UserNotifications,
+	cron?: boolean,
+): Promise<DateReturn | boolean> => {
+	let { frequency_type, frequency, notification_date } = notification;
+	let snoozeFromDate = notification_date;
+	//notification date should be before today to snooze as you dont snooze in the future
+	let todayAfterNotificationDate = compareAsc(new Date(), notification_date) === 1;
+	if (todayAfterNotificationDate) {
+		snoozeFromDate = new Date();
+	}
+
+	let snoozeDateResult = calculateSnoozeDate(snoozeFromDate, frequency, frequency_type);
 	notification.notification_date = snoozeDateResult.date;
-	notification.meta_notifications.user_snoozed = notification.meta_notifications.user_snoozed + 1;
+
+	if (!cron) {
+		notification.meta_notifications.user_snoozed = notification.meta_notifications.user_snoozed + 1;
+	}
+	if (cron) {
+		notification.meta_notifications.cron_snoozed = notification.meta_notifications.cron_snoozed + 1;
+	}
+
 	const userNotificationsRepository = await getRepository(UserNotifications);
 	const result = await userNotificationsRepository.save(notification);
+
 	return snoozeDateResult;
 };
 

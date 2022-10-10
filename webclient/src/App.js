@@ -12,6 +12,8 @@ import Dashboard from './pages/Dashboard';
 
 import UserProfile from './pages/UserProfile';
 import PendingNotifications from './pages/PendingNotifications';
+import UpcomingNotifications from './pages/UpcomingNotifications';
+
 import ScheduleDetails from './pages/ScheduleDetails';
 import ReminderSet from './pages/ReminderSet/index';
 
@@ -96,6 +98,7 @@ function App() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/list" element={<ListSchedules />} />
                   <Route path="/pending" element={<PendingNotifications />} />
+                  <Route path="/upcoming" element={<UpcomingNotifications />} />
                   <Route path="/details/:id" element={<ScheduleDetails />} />
                   <Route path="/set/:type" element={<ReminderSet />} />
                   <Route path="/set/:type/:id" element={<ReminderSet />} />

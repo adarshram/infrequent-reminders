@@ -11,6 +11,9 @@ const usePendingCount = () => {
       if (pendingCountResponse?.data && pendingCountResponse.data > 0) {
         setPendingCount(pendingCountResponse.data);
       }
+      if (pendingCountResponse.data === 0) {
+        setPendingCount(0);
+      }
     }
     if (pendingCountError) {
       let userNotSignedIn = pendingCountError.indexOf('Token') > -1;

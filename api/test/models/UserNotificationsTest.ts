@@ -23,10 +23,11 @@ import {
 	uncompleteNotification,
 	getNotificationInMonthForUser,
 	getNotificationsForUserByDate,
+	getPendingNotifications,
 } from './../../src/models/UserNotifications';
 import MetaNotificationsClass from './../../src/models/MetaNotifications';
 
-import { differenceInCalendarDays, addDays } from 'date-fns';
+import { differenceInCalendarDays, addDays, getUnixTime } from 'date-fns';
 import { expect } from 'chai';
 import 'mocha';
 import { createConnection } from 'typeorm';
@@ -302,4 +303,82 @@ describe('save new reminder set', () => {
 		//clear
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	});
+
+	it('get pending notifications', async () => {
+		let previousDate = addDays(new Date(), -365);
+		let notificationParameters = {
+			user_id: '12345',
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: previousDate,
+			is_active: true,
+		};
+		//too old
+		await createNotificationsForUser(notificationParameters);
+		//future
+		await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: addDays(new Date(), 1),
+		});
+		//is pending
+		await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: addDays(new Date(), -5),
+		});
+
+		let pendingNotifications = await getPendingNotifications(notificationParameters.user_id);
+		expect(pendingNotifications.length).to.be.equal(1);
+
+		await deleteNotificationsForUser(notificationParameters.user_id);
+	}).timeout(10000);
+	it('snooze notification', async () => {
+		let previousDate = addDays(new Date(), -10);
+		let notificationParameters = {
+			user_id: '12345',
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: previousDate,
+			is_active: true,
+		};
+
+		let notifications = [];
+		let createdNotification = await createNotificationsForUser(notificationParameters);
+		notifications.push(createdNotification);
+
+		createdNotification = await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: addDays(new Date(), -5),
+		});
+		notifications.push(createdNotification);
+
+		createdNotification = await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: addDays(new Date(), -20),
+		});
+		notifications.push(createdNotification);
+
+		let pendingNotifications = await getPendingNotifications(notificationParameters.user_id);
+
+		let results = await Promise.all(
+			pendingNotifications.map(async (currentNotification) => {
+				await snoozeNotification(currentNotification.id, currentNotification.user_id);
+				return await getNotificationById(currentNotification.id, currentNotification.user_id);
+			}),
+		);
+
+		//expect all snoozed dates to be the same as its from the date we snoozed not from the past
+		expect(getUnixTime(results[0].notification_date)).to.equal(
+			getUnixTime(results[1].notification_date),
+		);
+		expect(getUnixTime(results[1].notification_date)).to.equal(
+			getUnixTime(results[2].notification_date),
+		);
+
+		await deleteNotificationsForUser(notificationParameters.user_id);
+	}).timeout(10000);
 });
+//npm test test\models\UserNotificationsTest.ts -- --grep "snooze notification"

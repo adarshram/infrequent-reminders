@@ -24,7 +24,9 @@ export const attachPrivateRoutes = (app: any): void => {
   app.post('/user/notifications/listByDate', authRoute, userNotifications.listNotificationsForDate);
   app.get('/user/notifications/show/:id', authRoute, userNotifications.show);
   app.post('/user/notifications/delete', authRoute, userNotifications.deleteRow);
+
   app.get('/user/notifications/pending', authRoute, userNotifications.pendingNotifications);
+  app.get('/user/notifications/upcoming', authRoute, userNotifications.upcomingNotifications);
 
   app.get('/user/notifications/snooze/:id', authRoute, userNotifications.snoozeNotifications);
   app.get(
@@ -32,6 +34,7 @@ export const attachPrivateRoutes = (app: any): void => {
     authRoute,
     userNotifications.markNotificationComplete,
   );
+
   app.get(
     '/user/notifications/pending/count',
     authRoute,

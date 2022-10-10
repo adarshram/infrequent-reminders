@@ -19,11 +19,7 @@ const firebaseConfig = {
 // messages.
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
-/*messaging.onMessage((payload) => {
-  console.log('hello!');
-  // ...
-});*/
-messaging.onBackgroundMessage((payload) => {
+/*messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received foreground message ', payload);
   // Customize notification here
   const notificationTitle = 'Background Message Title';
@@ -33,4 +29,4 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
-});
+});*/
