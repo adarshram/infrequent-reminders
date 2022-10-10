@@ -1,7 +1,11 @@
 import React, { useContext } from 'react';
 
 import { AppBar, IconButton, Badge, Typography, Toolbar, Button } from '@mui/material';
-import { Person as PersonIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
+import {
+	Person as PersonIcon,
+	Notifications as NotificationsIcon,
+	NextWeek as NextWeekIcon,
+} from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom'; // version 5.2.0
 
@@ -16,6 +20,7 @@ export default function Header({ text, onClose, onConfirm }) {
 	const userProfile = '/userProfile';
 	const dashBoard = '/';
 	const pending = '/pending';
+	const upcoming = '/upcoming';
 
 	return (
 		<>
@@ -50,6 +55,13 @@ export default function Header({ text, onClose, onConfirm }) {
 								/>
 							</Badge>
 						)}
+					</IconButton>
+					<IconButton color="inherit">
+						<NextWeekIcon
+							onClick={() => {
+								navigate(upcoming);
+							}}
+						/>
 					</IconButton>
 					<PersonIcon
 						onClick={() => {

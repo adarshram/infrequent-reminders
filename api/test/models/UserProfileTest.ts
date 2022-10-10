@@ -41,6 +41,8 @@ import 'mocha';
 import { createConnection } from 'typeorm';
 import { getTime } from 'date-fns';
 //npm test test\models\UserProfileTest.ts -- --grep "gets users with preferences"
+//npm test test\models\UserProfileTest.ts -- --grep "gets user email"
+
 before(async () => {
   await establishDatabaseConnection();
   await initializeFireBase();
