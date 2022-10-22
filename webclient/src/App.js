@@ -47,7 +47,7 @@ function App() {
     },
   });
   initializeFireBase();
-  const auth = getAuth().catch((e) => {});
+  const auth = getAuth();
 
   const [userObject, setUserObject] = useState(null);
   useEffect(() => {
