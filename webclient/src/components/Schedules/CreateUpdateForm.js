@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 //import DatePicker from '@mui/lab/DatePicker';
 import { DatePicker } from '@mui/x-date-pickers';
 import { Grid, Alert, TextField, MenuItem } from '@mui/material';
@@ -10,20 +10,21 @@ import { format, add } from 'date-fns';
 
 export default function CreateUpdateForm({ formValues, errors, messages, setFormValues }) {
 	const { subject, description, frequency, frequency_type, notification_date } = formValues;
+	const [hasUserChangedDate, setHasUserChangedDate] = useState(false);
 	const handleFrequencyChange = (e) => {
 		let updatedFormValues = {
 			...formValues,
 			[e.target.name]: e.target.value,
 		};
-		let calculatedNextDate = calculateUpdatedDate(
-			updatedFormValues.frequency_type,
-			updatedFormValues.frequency,
-		);
+		let notificationDate = hasUserChangedDate
+			? formValues.notification_date
+			: calculateUpdatedDate(updatedFormValues.frequency_type, updatedFormValues.frequency);
+
 		setFormValues((previous) => {
 			let newState = {
 				...previous,
 				[e.target.name]: e.target.value,
-				notification_date: calculatedNextDate,
+				notification_date: notificationDate,
 			};
 			return newState;
 		});
@@ -63,6 +64,11 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 			};
 			return newState;
 		});
+	};
+	const updateDateInForm = (newDate) => {
+		let newDateHasValue = newDate !== null;
+		setHasUserChangedDate(newDateHasValue);
+		updateFormValues('notification_date', newDate);
 	};
 	return (
 		<Grid container spacing={2} alignItems="center">
@@ -144,7 +150,7 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 					<DatePicker
 						label="Enter First Recurring date"
 						value={notification_date}
-						onChange={(value) => updateFormValues('notification_date', value)}
+						onChange={(value) => updateDateInForm(value)}
 						name="notification_date"
 						renderInput={(params) => <TextField {...params} />}
 						required
