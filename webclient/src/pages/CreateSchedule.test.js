@@ -4,7 +4,7 @@ import useServerCall from '../hooks/useServerCall';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
 import { UserContext } from '../models/UserContext';
-
+import CreateUpdateForm from '../components/Schedules/CreateUpdateForm';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const wait = async () => {
@@ -19,14 +19,19 @@ jest.mock('react-router-dom', () => {
 		useParams: jest.fn(),
 	};
 });
-
-test('Does not change the date automatically once set by the user', () => {
+jest.mock('../components/Schedules/CreateUpdateForm', () => jest.fn());
+const Dummy = () => {
+	return <div data-testid="createupdateForm"></div>;
+};
+test('Renders create update form', () => {
 	useNavigate.mockReturnValue(() => {});
 	useParams.mockReturnValue({ id: false });
+	CreateUpdateForm.mockImplementation(Dummy);
 	render(
 		<UserContext.Provider value={{ user: { uid: '123123' } }}>
 			<CreateSchedule />}
 		</UserContext.Provider>,
 	);
-	screen.debug();
+
+	expect(screen.getByTestId('createupdateForm')).toBeInTheDocument();
 });
