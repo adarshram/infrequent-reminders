@@ -73,8 +73,3 @@ export const getCollectionById = async (collectionName, id) => {};
 export const searchCollection = async (collectionName, field, compare, value) => {};
 
 export const deleteDocument = async (collectionName, id) => {};
-/*
-
-set GOOGLE_APPLICATION_CREDENTIALS=C:\Users\adars\projects\crypto\infrequent-scheduler\google_credentials.json
-
-*/

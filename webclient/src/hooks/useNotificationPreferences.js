@@ -16,9 +16,6 @@ const generateToken = async () => {
   return false;
 };
 const detectBrowser = () => {
-  if (!navigator) {
-    return 'Unknown';
-  }
   let userAgent = navigator.userAgent;
   /*let browserName;
 
@@ -46,15 +43,8 @@ const useFetchBrowserData = () => {
   useEffect(() => {
     if (!dataLoaded) {
       const loadToken = async () => {
-        try {
-          console.log('i come here1');
-          let currentToken = await generateToken();
-          setToken(currentToken ? currentToken : false);
-        } catch (e) {
-          setToken(false);
-          console.log(e.message);
-        }
-        console.log('i come here2');
+        let currentToken = await generateToken();
+        setToken(currentToken ? currentToken : false);
       };
       const loadBrowserDetails = async () => {
         let browserName = detectBrowser();
@@ -72,7 +62,7 @@ const useFetchBrowserData = () => {
   return [token, browserData, dataLoaded];
 };
 
-const useNotificationPreference = (fBaseUser) => {
+const useNotificationPreferences = (fBaseUser) => {
   ///useState
 
   const [token, browserData, browserDataLoaded] = useFetchBrowserData();
@@ -167,4 +157,4 @@ const useNotificationPreference = (fBaseUser) => {
   return [currentStatus, save, remove, isLoading, errors];
 };
 
-export default useNotificationPreference;
+export default useNotificationPreferences;
