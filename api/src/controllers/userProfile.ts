@@ -8,6 +8,8 @@ import {
   deleteVapidKeyForUser,
 } from '../models/UserProfile';
 
+import * as userVapidKeys from '../models/UserVapidKeys';
+
 import { successResponse, errorResponse } from '../responses';
 
 export const view = async (req: Request, res: Response) => {
@@ -44,6 +46,42 @@ export const save = async (req: Request, res: Response) => {
   const userProfileRepository = await getRepository(UserProfile);
   const result = await userProfileRepository.save(userProfile);
   successResponse(res, result);
+};
+
+export const notificationList = async (req: Request, res: Response) => {
+  const fBaseUser = res.locals.user;
+  const fireBaseRefId = fBaseUser.uid;
+  const userKeys = await userVapidKeys.getKeysForUser(fireBaseRefId);
+  if (userKeys && userKeys[0]) {
+    successResponse(res, userKeys[0]);
+    return;
+  }
+  errorResponse(res, ['No Keys']);
+  return;
+};
+
+export const saveNotificationDevice = async (req: Request, res: Response) => {
+  const fBaseUser = res.locals.user;
+  const { deviceId, switchStatus, deviceName } = req.body;
+  if (deviceId == '') {
+    errorResponse(res, ['No Vapid Key']);
+    return;
+  }
+  const fireBaseRefId = fBaseUser.uid;
+
+  const saveResponse = await userVapidKeys.saveDevicePreference(
+    fireBaseRefId,
+    deviceId,
+    deviceName,
+    switchStatus,
+  );
+
+  if (saveResponse) {
+    successResponse(res, saveResponse);
+    return;
+  }
+  errorResponse(res, ['Unknown Error']);
+  return;
 };
 
 export const saveNotificationPreference = async (req: Request, res: Response) => {

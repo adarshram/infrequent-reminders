@@ -13,39 +13,49 @@ import {
 
 import { UserContext } from '../models/UserContext';
 import useServerCall from '../hooks/useServerCall';
-import useNotificationPreference from '../hooks/useNotificationPreference';
-
+import useProfileData from '../hooks/useProfileData';
+import {
+	useNotificationDeviceList,
+	useEditNotificationForUser,
+} from '../hooks/notificationDevices';
+const defaultFormValues = {
+	first_name: '',
+	last_name: '',
+	email: '',
+	id: '',
+};
 export default function UserProfile() {
 	const signedInUser = useContext(UserContext);
-	const [profileCaller, profileData, profileError, profileLoading] = useServerCall('/user/profile');
+	const [profileData, , profileError, refreshProfile] = useProfileData();
+
 	const [saveProfile, , ,] = useServerCall('/user/profile/save');
 	const [
-		currentStatus,
-		enableNotification,
-		disableNofitication,
-		notificationLoading,
+		deviceList,
+		currentDevice,
+		hasNotificationEnabled,
 		notificationErrors,
-	] = useNotificationPreference(signedInUser.user);
-	const [formValues, setFormValues] = useState({
-		first_name: '',
-		last_name: '',
-		email: '',
-		id: '',
-	});
+		refreshNotificationList,
+	] = useNotificationDeviceList();
+
+	const [editNotificationCall] = useEditNotificationForUser();
+
+	const [formValues, setFormValues] = useState(defaultFormValues);
+
 	const [errors, setErrors] = useState([]);
 	const [messages, setMessages] = useState([]);
 
 	useEffect(() => {
 		if (signedInUser.user) {
-			if (!profileLoading && profileData === false && profileError === false) {
-				profileCaller.get();
+			if (profileData === null) {
+				setFormValues(defaultFormValues);
+				refreshProfile(true);
 			}
 		}
-	}, [profileCaller, profileData, profileLoading, signedInUser.user, profileError]);
+	}, [refreshProfile, profileData, signedInUser.user]);
 
 	useEffect(() => {
-		if (profileData) {
-			let userValues = profileData.data;
+		if (profileData && profileData.id && formValues.id === '') {
+			let userValues = profileData;
 			setFormValues((values) => {
 				let appendedValues = {
 					...values,
@@ -57,10 +67,10 @@ export default function UserProfile() {
 				return appendedValues;
 			});
 		}
-		if (profileError) {
+		if (profileError && profileError.length > 0) {
 			console.log(profileError);
 		}
-	}, [profileData, profileError]);
+	}, [profileData, profileError, formValues]);
 
 	const validate = () => {
 		const validateEmail = (email) => {
@@ -107,7 +117,8 @@ export default function UserProfile() {
 		let success = await saveProfile.post(allFormValues);
 		if (success) {
 			setMessages(['Sucessfully Saved User']);
-			await profileCaller.get();
+			setFormValues(defaultFormValues);
+			refreshProfile(true);
 		}
 	};
 
@@ -117,16 +128,13 @@ export default function UserProfile() {
 			[e.target.name]: e.target.value,
 		});
 	};
-
-	const handleNotificationStatus = async (e) => {
-		const switchedOn = e.target.checked;
-		if (switchedOn) {
-			await enableNotification();
-			return;
-		}
-		if (!switchedOn) {
-			await disableNofitication();
-		}
+	const enableDisableNotification = async (notification) => {
+		await editNotificationCall(
+			notification.vapidKey,
+			!notification.enabled,
+			notification.name ?? 'Unknown',
+		);
+		refreshNotificationList();
 	};
 
 	const { first_name, last_name, email } = formValues;
@@ -173,7 +181,7 @@ export default function UserProfile() {
 							</Alert>
 						);
 					})}
-					{!currentStatus && <Alert severity="info">Notifications Not Enabled</Alert>}
+					{!hasNotificationEnabled && <Alert severity="info">Notifications Not Enabled</Alert>}
 
 					<Grid container spacing={2}>
 						<Grid item xs={12}>
@@ -210,22 +218,29 @@ export default function UserProfile() {
 								required
 							/>
 						</Grid>
-						<Grid item xs={12}>
-							{notificationLoading ? (
-								'Loading'
-							) : (
-								<FormControlLabel
-									control={
-										<Switch
-											checked={currentStatus}
-											onChange={handleNotificationStatus}
-											name="notificationPreference"
+
+						{deviceList &&
+							deviceList.length > 0 &&
+							deviceList.map((notification, key) => {
+								return (
+									<Grid item xs={12} key={key}>
+										<FormControlLabel
+											control={
+												<Switch
+													checked={notification.enabled ? true : false}
+													name="notificationPreference"
+													onChange={() => {
+														enableDisableNotification(notification);
+													}}
+												/>
+											}
+											label={`Notifications for ${notification.name} ${
+												notification.vapidKey === currentDevice ? '(current*)' : ''
+											}`}
 										/>
-									}
-									label="Notifications"
-								/>
-							)}
-						</Grid>
+									</Grid>
+								);
+							})}
 					</Grid>
 					<Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
 						Save

@@ -58,6 +58,8 @@ export const attachPrivateRoutes = (app: any): void => {
   app.get('/user/reminderSet/deleteSet/:id', authRoute, async (req: Request, res: Response) => {
     await handleRoute(req, res, reminderSet.deleteNotificationSetById);
   });
+  app.get('/user/notificationDevices/list', authRoute, userProfile.notificationList);
+  app.post('/user/notificationDevices/saveDevice', authRoute, userProfile.saveNotificationDevice);
 };
 
 export const handleRoute = async (req: Request, res: Response, routeFunction: any) => {
