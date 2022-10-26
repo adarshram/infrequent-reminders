@@ -389,8 +389,15 @@ export const snoozeNotificationObject = async (
 	if (todayAfterNotificationDate) {
 		snoozeFromDate = new Date();
 	}
-
-	let snoozeDateResult = calculateSnoozeDate(snoozeFromDate, frequency, frequency_type);
+	let alreadySnoozed = notification?.meta_notifications
+		? notification.meta_notifications.cron_snoozed
+		: 0;
+	let snoozeDateResult = calculateSnoozeDate(
+		snoozeFromDate,
+		frequency,
+		frequency_type,
+		alreadySnoozed,
+	);
 	notification.notification_date = snoozeDateResult.date;
 
 	if (!cron) {

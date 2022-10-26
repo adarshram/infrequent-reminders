@@ -42,7 +42,7 @@ import { expect } from 'chai';
 import 'mocha';
 import { createConnection } from 'typeorm';
 import { getTime } from 'date-fns';
-//npm test test\models\UserVapidKeysTest.ts -- --grep "save user device key"
+//npm test test\models\UserVapidKeysTest.ts -- --grep "deletes device for user"
 //npm test test\models\UserVapidKeysTest.ts -- --grep "gets user email"
 
 before(async () => {
@@ -79,38 +79,24 @@ describe('send notification handlers', () => {
     expect(currentKey.devices[1]['enabled']).to.be.equal(switchValue);
     expect(currentKey.devices[1]['vapidKey']).to.be.equal(deviceId);
   }).timeout(10000);
-  it('gets user with vapid key', async () => {
-    const db = getFireStoreDbObject();
-    const vapidKeyObject = db.collection('UserVapidKeys');
-    //'83zkNxe3BtSpXsFgxrDgw49ktWj2'
-    const userKeys = await userVapidKeys.getKeysForUser('83zkNxe3BtSpXsFgxrDgw49ktWj2');
-    console.log(userKeys);
-    //await userVapidKeys.convertAllKeysToDevices();
-    /*return;
-    let fireBaseRefId = '1231231234';
-    let res = await addToCollection(
-      'UserVapidKeys',
-      {
-        created_at: new Date().getDate(),
-        fireBaseRefId: '1231231234',
-        vapidKeys: '1233',
-        devices: [{ vapidKey: '12312', name: 'abc' }],
-      },
-      false,
-    );
+  it('deletes device for user', async () => {
+    let fireBaseRefId = '123';
+    await userVapidKeys.deleteForUser(fireBaseRefId);
 
-    //console.log(await userVapidKeys.getKeysForUser(fireBaseRefId));
-    //const docToDelete = await vapidKeyObject.doc(id).get();
-    //await docToDelete.ref.delete();
+    let deviceId = 'adsdsadasdsadsadsada';
+    let deviceName = 'Chrome';
+    let switchValue = true;
+    await userVapidKeys.saveDevicePreference(fireBaseRefId, deviceId, deviceName, switchValue);
+    let userKeys = await userVapidKeys.getKeysForUser(fireBaseRefId);
+    let currentKey = userKeys[0];
 
-    /*const snapshot = await vapidKeyObject.limit(1).get();
-    let vapidKeys = [];
+    await userVapidKeys.deleteDeviceForUser(fireBaseRefId, deviceId);
 
-    snapshot.forEach((doc) => {
-      let data = doc.data();
-      vapidKeys = [...vapidKeys, ...data.vapidKeys];
-    });*/
+    userKeys = await userVapidKeys.getKeysForUser(fireBaseRefId);
+    currentKey = userKeys[0];
+    expect(currentKey.devices.length).to.be.equal(0);
+    expect(currentKey.vapidKeys.length).to.be.equal(0);
 
-    //let results = await userVapidKeys.deleteForUser(fireBaseRefId);
+    await userVapidKeys.deleteForUser(fireBaseRefId);
   }).timeout(10000);
 });

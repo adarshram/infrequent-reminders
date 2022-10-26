@@ -16,8 +16,10 @@ export const calculateSnoozeDate = (
   inputDate: Date,
   frequency: number,
   frequencyType: string,
+  pastSnoozeCount?: number,
 ): DateReturn => {
   let nextNotificationDate = new Date();
+  let alreadySnoozedTimes = pastSnoozeCount ? pastSnoozeCount : 0;
   if (frequencyType == 'm') {
     nextNotificationDate = addMonths(inputDate, frequency);
   }
@@ -26,8 +28,22 @@ export const calculateSnoozeDate = (
   }
 
   let daysToNextNotification = differenceInCalendarDays(nextNotificationDate, inputDate);
-  //Get 10 percent to snooze
-  let snoozeDays = Math.ceil(daysToNextNotification * (10 / 100));
+  let snoozePercentConfig = {
+    1: 10,
+    3: 30,
+    5: 50,
+  };
+  let snoozePercent = snoozePercentConfig[1];
+  if (alreadySnoozedTimes >= 3) {
+    snoozePercent = snoozePercentConfig[3];
+  }
+  if (alreadySnoozedTimes >= 5) {
+    snoozePercent = snoozePercentConfig[5];
+  }
+  if (alreadySnoozedTimes > 7) {
+    snoozePercent = 100;
+  }
+  let snoozeDays = Math.ceil(daysToNextNotification * (snoozePercent / 100));
   let snoozeDate = addDays(new Date(), snoozeDays);
   return {
     date: snoozeDate,
@@ -45,9 +61,8 @@ export const calculateNextNotification = (
     nextNotificationDate = addMonths(inputDate, frequency);
   }
   if (frequencyType == 'w') {
-    nextNotificationDate = addWeeks(inputDate, frequency);    
+    nextNotificationDate = addWeeks(inputDate, frequency);
   }
-
 
   let daysToNextNotification = differenceInCalendarDays(nextNotificationDate, inputDate);
   return {
