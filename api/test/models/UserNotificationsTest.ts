@@ -277,33 +277,45 @@ describe('save new reminder set', () => {
 			notification_date: previousDate,
 			is_active: true,
 		};
+		const saveNotificationWithCount = async (notificationParameters, cronCount) => {
+			await deleteNotificationsForUser(notificationParameters.user_id);
+			let notification = await createNotificationsForUser(notificationParameters);
+			let userNotifications = await getPendingNotifications(notificationParameters.user_id);
+			let userCurrentNotification = userNotifications[0];
+			userCurrentNotification.meta_notifications.cron_snoozed = cronCount;
 
-		await deleteNotificationsForUser(notificationParameters.user_id);
-		let notification = await createNotificationsForUser(notificationParameters);
-		let userNotifications = await getPendingNotifications(notificationParameters.user_id);
-		let userCurrentNotification = userNotifications[0];
-		userCurrentNotification.meta_notifications.cron_snoozed = 5;
+			const userNotificationsRepository = await getRepository(UserNotifications);
+			const result = await userNotificationsRepository.save(userCurrentNotification);
+			userNotifications = await getPendingNotifications(notificationParameters.user_id);
+			return userNotifications[0];
+		};
 
-		const userNotificationsRepository = await getRepository(UserNotifications);
-		const result = await userNotificationsRepository.save(userCurrentNotification);
-
-		userNotifications = await getPendingNotifications(notificationParameters.user_id);
-
-		let snoozeResult = await snoozeNotificationObject(userNotifications[0], true);
+		let createdNotification = await saveNotificationWithCount(notificationParameters, 5);
+		let snoozeResult = await snoozeNotificationObject(createdNotification, true);
 		//we shoud snooze around half a month as we have set 5
 		if (typeof snoozeResult !== 'boolean') {
 			expect(snoozeResult.days >= 14 && snoozeResult.days <= 18).to.equal(true);
 		}
-		//intentionally error out
+		//intentionally error out if the result is boolean
 		if (typeof snoozeResult === 'boolean') {
 			expect(false).to.equal(true);
 		}
 		let updatedNotification = await getNotificationById(
-			userNotifications[0].id,
-			userNotifications[0].user_id,
+			createdNotification.id,
+			createdNotification.user_id,
 		);
 
 		expect(updatedNotification.meta_notifications.cron_snoozed).to.equal(6);
+
+		createdNotification = await saveNotificationWithCount(notificationParameters, 8);
+		await snoozeNotificationObject(createdNotification, true);
+		updatedNotification = await getNotificationById(
+			createdNotification.id,
+			createdNotification.user_id,
+		);
+
+		//should be 0 as we its over 8 earlier and it should have reset to 0
+		expect(updatedNotification.meta_notifications.cron_snoozed).to.equal(0);
 
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	});
