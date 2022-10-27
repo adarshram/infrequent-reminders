@@ -406,6 +406,9 @@ export const snoozeNotificationObject = async (
 	if (cron) {
 		notification.meta_notifications.cron_snoozed = notification.meta_notifications.cron_snoozed + 1;
 	}
+	if (snoozeDateResult.shouldReset) {
+		notification.meta_notifications.cron_snoozed = 0;
+	}
 
 	const userNotificationsRepository = await getRepository(UserNotifications);
 	const result = await userNotificationsRepository.save(notification);

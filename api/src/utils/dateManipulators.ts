@@ -10,6 +10,7 @@ import {
 interface DateReturn {
   date: Date;
   days: number;
+  shouldReset?: boolean;
 }
 
 export const calculateSnoozeDate = (
@@ -33,6 +34,8 @@ export const calculateSnoozeDate = (
     3: 30,
     5: 50,
   };
+  let shouldReset = false;
+
   let snoozePercent = snoozePercentConfig[1];
   if (alreadySnoozedTimes >= 3) {
     snoozePercent = snoozePercentConfig[3];
@@ -42,12 +45,14 @@ export const calculateSnoozeDate = (
   }
   if (alreadySnoozedTimes > 7) {
     snoozePercent = 100;
+    shouldReset = true;
   }
   let snoozeDays = Math.ceil(daysToNextNotification * (snoozePercent / 100));
   let snoozeDate = addDays(new Date(), snoozeDays);
   return {
     date: snoozeDate,
     days: snoozeDays,
+    shouldReset: shouldReset,
   };
 };
 
