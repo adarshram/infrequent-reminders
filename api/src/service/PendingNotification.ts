@@ -10,12 +10,13 @@ import {
 import { UserNotifications } from '../entity/UserNotifications';
 import {
 	saveVapidKeyForUser,
-	deleteVapidKeyForUser,
 	getUsersWithNotificationPreference,
 	getVapidKeysForUser,
 	getUserProfileWithId,
 	getNotificationPreferenceForUser,
 } from '../models/UserProfile';
+import * as userVapidKeys from '../models/UserVapidKeys';
+
 import { sendNotificationMessageToVapidKey, sendNotificationEmail } from '../utils/notification';
 
 export class PendingNotification {
@@ -27,9 +28,10 @@ export class PendingNotification {
 		return getPendingNotifications(user_id);
 	};
 	send = async (notifications: UserNotifications[], user_id: string): Promise<boolean> => {
-		let vapidKeyData = await getVapidKeysForUser(user_id);
+		let userKeys = await userVapidKeys.getKeysForUser(user_id);
 		let sentNotification = false;
-		if (vapidKeyData) {
+		if (userKeys) {
+			let vapidKeyData = userKeys[0];
 			sentNotification = await this.handleVapidKeyNotificationForUser(
 				notifications,
 				user_id,
@@ -64,18 +66,20 @@ export class PendingNotification {
 			notificationSubject = `Your Reminder ${pending[0].subject} is overdue`;
 		}
 		let successFulKeys = await Promise.all(
-			vapidKeyData.vapidKeys
-				.map(async (vapidKey) => {
-					let { success, errors } = await sendNotificationMessageToVapidKey(
-						vapidKey,
-						notificationSubject,
-					);
-					if (success) {
-						return true;
-					}
-					if (!success) {
-						if (typeof errors !== 'boolean' && errors.unregistered && errors.unregistered != '') {
-							let res = await deleteVapidKeyForUser(user_id, vapidKey);
+			vapidKeyData.devices
+				.map(async (device) => {
+					if (device.enabled) {
+						let { success, errors } = await sendNotificationMessageToVapidKey(
+							device.vapidKey,
+							notificationSubject,
+						);
+						if (success) {
+							return true;
+						}
+						if (!success) {
+							if (typeof errors !== 'boolean' && errors.unregistered && errors.unregistered != '') {
+								let res = await userVapidKeys.deleteDeviceForUser(user_id, device.vapidKey);
+							}
 						}
 					}
 					return false;

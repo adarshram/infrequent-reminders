@@ -30,7 +30,7 @@ import { getTime } from 'date-fns';
 
 import { PendingNotification } from './../../src/service/PendingNotification';
 
-//npm test test\service\PendingNotificationTest.ts -- --grep "sends notification to user and snooze"
+//npm test test\service\PendingNotificationTest.ts -- --grep "sends notification per device"
 
 before(async () => {
 	await createConnection();
@@ -43,6 +43,7 @@ describe('notification data handler', () => {
 		let users = await pendingNotification.getUsersWithNotification();
 		expect(users.length > 0).to.equal(true);
 	});
+
 	it('process pending notification per user', async () => {
 		//83zkNxe3BtSpXsFgxrDgw49ktWj2
 
@@ -59,6 +60,34 @@ describe('notification data handler', () => {
 			}),
 		);
 	});
+	it('sends notification per device', async () => {
+		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
+		let previousDate = addDays(new Date(), -5);
+		let notificationParameters = {
+			user_id: validUserId,
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: previousDate,
+			is_active: true,
+		};
+
+		let notification = await createNotificationsForUser(notificationParameters);
+
+		let pendingNotification = new PendingNotification();
+		stub(pendingNotification, 'getUsersWithNotification').resolves([validUserId]);
+
+		let users = await pendingNotification.getUsersWithNotification();
+		await Promise.all(
+			users.map(async (user_id) => {
+				let userPendingNotifications = await pendingNotification.getPendingNotifications(user_id);
+				pendingNotification.send(userPendingNotifications, user_id);
+			}),
+		);
+		await deleteNotification(notification.id);
+	}).timeout(10000);
+
 	it('sends notification to user and snooze it accordingly', async () => {
 		let previousDate = addDays(new Date(), -5);
 		let notificationParameters = {

@@ -63,6 +63,35 @@ export const getKeysForUser = async (fireBaseRefId: string) => {
 };
 export const saveKey = async (fireBaseRefId: string, vapidKey: string, deviceName: string) => {};
 
+export const deleteDeviceForUser = async (fireBaseRefId: string, vapidKey: string) => {
+	const userKeys = await getKeysForUser(fireBaseRefId);
+	if (!userKeys) {
+		return false;
+	}
+	let vapidKeyData = userKeys[0];
+	let existingDevices = userKeys[0]['devices'];
+	let updatedDevices = existingDevices.filter((current) => {
+		let isCurrentDevice = current.vapidKey === vapidKey;
+		return !isCurrentDevice;
+	});
+	let existingVapidKeys = userKeys[0]['vapidKeys'];
+	let updatedVapidKeys = existingVapidKeys.filter((current) => {
+		let isCurrentDevice = current === vapidKey;
+		return !isCurrentDevice;
+	});
+	let res = await addToCollection(
+		'UserVapidKeys',
+		{
+			created_at: new Date().getDate(),
+			fireBaseRefId: vapidKeyData.fireBaseRefId,
+			vapidKeys: updatedVapidKeys,
+			devices: updatedDevices,
+		},
+		vapidKeyData.id,
+	);
+	return true;
+};
+
 export const saveDevicePreference = async (
 	fireBaseRefId: string,
 	deviceId: string,

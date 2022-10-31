@@ -2,6 +2,18 @@ import { calculateSnoozeDate, calculateNextNotification } from './../src/utils/d
 import { createConnection } from 'typeorm';
 import { expect } from 'chai';
 import 'mocha';
+import {
+  format,
+  differenceInCalendarDays,
+  addWeeks,
+  addMonths,
+  addDays,
+  subDays,
+  compareAsc,
+} from 'date-fns';
+
+//npm test test\dateManipulators.ts -- --grep "snoozes notifications depending on count"
+
 describe('dbConnection', () => {
   it('dbConnection', async () => {
     let results = await createConnection({
@@ -24,6 +36,23 @@ describe('should give snooze date', () => {
   it('month snooze date', () => {
     const result = calculateSnoozeDate(new Date(), 2, 'm');
     expect(result.days).to.equal(6);
+  });
+  it('snoozes notifications depending on count', () => {
+    //10 percent by default
+    let result = calculateSnoozeDate(new Date(), 1, 'm');
+    expect(result.days >= 3 && result.days <= 4).to.equal(true);
+
+    //30 percent
+    result = calculateSnoozeDate(new Date(), 1, 'm', 4);
+    expect(result.days >= 9 && result.days <= 11).to.equal(true);
+
+    //50 percent
+    result = calculateSnoozeDate(new Date(), 1, 'm', 5);
+    expect(result.days >= 14 && result.days <= 18).to.equal(true);
+
+    //100 percent
+    result = calculateSnoozeDate(new Date(), 1, 'm', 8);
+    expect(result.days >= 28 && result.days <= 31).to.equal(true);
   });
 });
 

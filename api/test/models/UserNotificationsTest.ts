@@ -19,6 +19,7 @@ import {
 	createNotificationsForUser,
 	completeNotification,
 	snoozeNotification,
+	snoozeNotificationObject,
 	getNotificationsForUser,
 	uncompleteNotification,
 	getNotificationInMonthForUser,
@@ -40,6 +41,8 @@ import { getRepository, getManager } from 'typeorm';
 before(async () => {
 	await createConnection();
 });
+
+//npm test test\models\UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -262,9 +265,63 @@ describe('save new reminder set', () => {
 		//clear
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	});
+	it('snoozes notifications depending on cron count', async () => {
+		let previousDate = addDays(new Date(), -5);
+
+		let notificationParameters = {
+			user_id: '123',
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'm',
+			frequency: 1,
+			notification_date: previousDate,
+			is_active: true,
+		};
+		const saveNotificationWithCount = async (notificationParameters, cronCount) => {
+			await deleteNotificationsForUser(notificationParameters.user_id);
+			let notification = await createNotificationsForUser(notificationParameters);
+			let userNotifications = await getPendingNotifications(notificationParameters.user_id);
+			let userCurrentNotification = userNotifications[0];
+			userCurrentNotification.meta_notifications.cron_snoozed = cronCount;
+
+			const userNotificationsRepository = await getRepository(UserNotifications);
+			const result = await userNotificationsRepository.save(userCurrentNotification);
+			userNotifications = await getPendingNotifications(notificationParameters.user_id);
+			return userNotifications[0];
+		};
+
+		let createdNotification = await saveNotificationWithCount(notificationParameters, 5);
+		let snoozeResult = await snoozeNotificationObject(createdNotification, true);
+		//we shoud snooze around half a month as we have set 5
+		if (typeof snoozeResult !== 'boolean') {
+			expect(snoozeResult.days >= 14 && snoozeResult.days <= 18).to.equal(true);
+		}
+		//intentionally error out if the result is boolean
+		if (typeof snoozeResult === 'boolean') {
+			expect(false).to.equal(true);
+		}
+		let updatedNotification = await getNotificationById(
+			createdNotification.id,
+			createdNotification.user_id,
+		);
+
+		expect(updatedNotification.meta_notifications.cron_snoozed).to.equal(6);
+
+		createdNotification = await saveNotificationWithCount(notificationParameters, 8);
+		await snoozeNotificationObject(createdNotification, true);
+		updatedNotification = await getNotificationById(
+			createdNotification.id,
+			createdNotification.user_id,
+		);
+
+		//should be 0 as we its over 8 earlier and it should have reset to 0
+		expect(updatedNotification.meta_notifications.cron_snoozed).to.equal(0);
+
+		await deleteNotificationsForUser(notificationParameters.user_id);
+	});
+
 	it('join meta notification', async () => {
 		let previousDate = addDays(new Date(), -5);
-		console.log(previousDate);
 
 		let notificationParameters = {
 			user_id: '123',
@@ -282,16 +339,6 @@ describe('save new reminder set', () => {
 		expect(notification.subject).to.be.equal(notificationParameters.subject);
 		await snoozeNotification(notification.id, notification.user_id);
 		await completeNotification(notification.id, notification.user_id);
-
-		/*let results = await getRepository(MetaNotifications)
-			.createQueryBuilder('mn')
-
-			.leftJoinAndSelect('mn.user_notifications', 'user_notifications')
-			.getMany();
-		let results = await getRepository(MetaNotifications).find({
-			relations: ['user_notifications'],
-			where: { id: 114 },
-		});*/
 
 		let results = await getRepository(UserNotifications).findOne({
 			relations: ['meta_notifications'],
