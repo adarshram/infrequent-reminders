@@ -1,67 +1,11 @@
 import { useState, useEffect } from 'react';
 import useServerCall from './useServerCall';
-import { getMessaging, getToken } from 'firebase/messaging';
-const generateToken = async () => {
-	const messaging = getMessaging();
-	try {
-		let currentToken = await getToken(messaging, {
-			vapidKey:
-				'BNFi-j9_4uWYLavwcucIyUFO2-Fu5NLFIeVKC3EwE89wL2pUZLfvnWnE9Rl09hT9MFAxc_ROdIihscngX9Bvk9w',
-		});
-		return currentToken;
-	} catch (err) {
-		console.log(err);
-	}
-	return false;
-};
-const detectBrowser = () => {
-	let userAgent = navigator.userAgent;
-	/*let browserName;
+import useFetchBrowserData from './useFetchBrowserData';
 
-  if (userAgent.match(/chrome|chromium|crios/i)) {
-    browserName = 'chrome';
-  } else if (userAgent.match(/firefox|fxios/i)) {
-    browserName = 'firefox';
-  } else if (userAgent.match(/safari/i)) {
-    browserName = 'safari';
-  } else if (userAgent.match(/opr\//i)) {
-    browserName = 'opera';
-  } else if (userAgent.match(/edg/i)) {
-    browserName = 'edge';
-  } else {
-    browserName = 'No browser detection';
-  }*/
-	return userAgent;
-};
-
-const useFetchBrowserData = () => {
-	const [token, setToken] = useState(false);
-	const [browserData, setBrowserData] = useState({});
-	const [dataLoaded, setDataLoaded] = useState(false);
-
-	useEffect(() => {
-		if (!dataLoaded) {
-			const loadToken = async () => {
-				let currentToken = await generateToken();
-				setToken(currentToken ? currentToken : false);
-			};
-			const loadBrowserDetails = async () => {
-				let browserName = detectBrowser();
-				await loadToken();
-				setBrowserData({
-					name: browserName,
-				});
-				setDataLoaded(true);
-			};
-
-			loadBrowserDetails();
-		}
-	}, [dataLoaded]);
-
-	return [token, browserData, dataLoaded];
-};
 export const useNotificationDeviceList = () => {
 	const [deviceList, setDeviceList] = useState([]);
+	const [currentDeviceToken, browserData] = useFetchBrowserData();
+
 	const [hasNotificationEnabled, setHasNotificationEnabled] = useState(false);
 	const [listCall, notificationListResponse, ,] = useServerCall('/user/notificationDevices/list');
 	useEffect(() => {
@@ -95,10 +39,32 @@ export const useNotificationDeviceList = () => {
 		}
 		setHasNotificationEnabled(hasEnabled);
 	}, [deviceList]);
+
+	useEffect(() => {
+		let hasDeviceList = deviceList && deviceList.length;
+		let newDevice;
+		if (currentDeviceToken) {
+			newDevice = { vapidKey: currentDeviceToken, name: browserData.name, enabled: false };
+		}
+		if (hasDeviceList && newDevice?.vapidKey) {
+			let foundIndex = deviceList.findIndex((current) => {
+				return current.vapidKey === currentDeviceToken;
+			});
+			let notFound = foundIndex === -1;
+			if (notFound) {
+				let newDeviceList = [...deviceList, newDevice];
+				setDeviceList(newDeviceList);
+			}
+		}
+		if (!hasDeviceList && newDevice?.vapidKey) {
+			setDeviceList([newDevice]);
+		}
+	}, [deviceList, browserData, currentDeviceToken]);
+
 	const refreshCall = async () => {
 		listCall.get();
 	};
-	const [currentDeviceToken, ,] = useFetchBrowserData();
+
 	const notificationErrors = [];
 	return [
 		deviceList ? deviceList : [],
