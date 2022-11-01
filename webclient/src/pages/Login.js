@@ -10,7 +10,7 @@ import { Navigate } from 'react-router-dom';
 
 export default function Login() {
 	const userObject = useContext(UserContext);
-	const [{ googleSignin, emailPassword }] = useFbaseAuthUser(userObject.user);
+	const [{ googleSignin, emailPassword }, authErrors] = useFbaseAuthUser(userObject.user);
 	const [signUp, showSignup] = useState(false);
 	const [signIn, showSignin] = useState(false);
 	const initializing = userObject.user === null;
@@ -73,8 +73,18 @@ export default function Login() {
 					></Grid>
 				</Grid>
 
-				{signUp && <Signup signupMethod={emailPassword.signup} />}
-				{signIn && <Signin signinMethod={emailPassword.signin} />}
+				{signUp && (
+					<Signup
+						signupMethod={emailPassword.signup}
+						errors={authErrors.length ? authErrors : false}
+					/>
+				)}
+				{signIn && (
+					<Signin
+						signinMethod={emailPassword.signin}
+						errors={authErrors.length ? authErrors : false}
+					/>
+				)}
 			</>
 		);
 	}

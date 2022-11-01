@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
-import { Button, TextField, Box, Grid, Typography, Paper } from '@mui/material';
-export default function Signin({ signinMethod }) {
+import { Button, TextField, Box, Grid, Typography, Paper, Alert } from '@mui/material';
+export default function Signin({ signinMethod, errors }) {
 	const [formValues, setFormValues] = useState({
 		email: '',
 		password: '',
@@ -23,7 +23,8 @@ export default function Signin({ signinMethod }) {
 		<Grid container direction="row" justifyContent="center">
 			<Grid
 				item
-				xs={4}
+				xs={12}
+				md={6}
 				sx={{
 					textAlign: 'center',
 					justifyContent: 'center',
@@ -40,6 +41,14 @@ export default function Signin({ signinMethod }) {
 						Signin
 					</Typography>
 					<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+						{errors &&
+							errors.map((err, key) => {
+								return (
+									<Alert key={key} severity="error">
+										{err}
+									</Alert>
+								);
+							})}
 						<Grid container spacing={2}>
 							<Grid item xs={12}>
 								<TextField

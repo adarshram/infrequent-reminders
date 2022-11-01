@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, TextField, Box, Grid, Typography, Paper } from '@mui/material';
-export default function Signup({ signupMethod }) {
+import { Button, TextField, Box, Grid, Typography, Paper, Alert } from '@mui/material';
+export default function Signup({ signupMethod, errors }) {
 	const [formValues, setFormValues] = useState({
 		first_name: '',
 		last_name: '',
@@ -23,7 +23,8 @@ export default function Signup({ signupMethod }) {
 		<Grid container direction="row" justifyContent="center">
 			<Grid
 				item
-				xs={4}
+				xs={12}
+				md={6}
 				sx={{
 					textAlign: 'center',
 					justifyContent: 'center',
@@ -45,6 +46,14 @@ export default function Signup({ signupMethod }) {
 						onSubmit={handleSubmit}
 						sx={{ mt: 3, textAlign: 'center' }}
 					>
+						{errors &&
+							errors.map((err, key) => {
+								return (
+									<Alert key={key} severity="error">
+										{err}
+									</Alert>
+								);
+							})}
 						<Grid container spacing={2}>
 							<Grid item xs={12}>
 								<TextField
