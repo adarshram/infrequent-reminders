@@ -54,7 +54,7 @@ export default function UserProfile() {
 	}, [refreshProfile, profileData, signedInUser.user]);
 
 	useEffect(() => {
-		if (profileData && profileData.id && formValues.id === '') {
+		if (profileData && profileData.email && formValues.email === '') {
 			let userValues = profileData;
 			setFormValues((values) => {
 				let appendedValues = {
