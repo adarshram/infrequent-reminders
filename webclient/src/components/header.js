@@ -63,11 +63,13 @@ export default function Header({ text, onClose, onConfirm }) {
 							}}
 						/>
 					</IconButton>
-					<PersonIcon
-						onClick={() => {
-							navigate(userProfile);
-						}}
-					/>
+					<IconButton color="inherit">
+						<PersonIcon
+							onClick={() => {
+								navigate(userProfile);
+							}}
+						/>
+					</IconButton>
 				</Toolbar>
 			</AppBar>
 		</>
