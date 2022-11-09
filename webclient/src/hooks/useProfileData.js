@@ -8,20 +8,25 @@ const useProfileData = () => {
   const [listCall, , , loading] = useServerCall('/user/profile');
   useEffect(() => {
     let mounted = true;
-    setData([]);
+
     if (refresh) {
       const getResults = async () => {
-        var results = await listCall.getAsync();
+        try {
+          setData(null);
+          var results = await listCall.getAsync();
+          if (mounted) {
+            if (results.success) {
+              setData(results.data);
+            }
 
-        if (mounted) {
-          if (results.success) {
-            setData(results.data);
+            if (!results.success) {
+              setData(false);
+              setErrors([results.message ? results.message : 'Unable to fetch Profile']);
+            }
           }
-
-          if (!results.success) {
-            setData(false);
-            setErrors([results.message ? results.message : 'Unable to fetch Profile']);
-          }
+        } catch (e) {
+          setData(false);
+          setErrors([e.message ? e.message : 'Unable to fetch Profile']);
         }
         setRefresh(false);
       };

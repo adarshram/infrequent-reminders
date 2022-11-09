@@ -2,6 +2,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import UserProfile from './UserProfile';
 import useProfileData from '../hooks/useProfileData';
 import * as notificationDevices from '../hooks/notificationDevices';
+import useFbaseAuthUser from '../hooks/useFbaseAuthUser';
+
 import * as fbMessaging from 'firebase/messaging';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
@@ -34,6 +36,12 @@ jest.mock('../hooks/useProfileData', () => () => [
 	(v) => {
 		console.log(v);
 	},
+]);
+jest.mock('../hooks/useFbaseAuthUser', () => () => [
+	{
+		logOut: jest.fn(),
+	},
+	false,
 ]);
 
 test('Shows user profile', async () => {
@@ -72,7 +80,13 @@ test('Shows user profile', async () => {
 	]);
 	await act(async () => {
 		render(
-			<UserContext.Provider value={{ user: { uid: 'TKsk1wPNQpSYattL8OhIYE5fI123' } }}>
+			<UserContext.Provider
+				value={{
+					user: { uid: 'TKsk1wPNQpSYattL8OhIYE5fI123' },
+					profile: mockProfileData,
+					fetchProfile: () => {},
+				}}
+			>
 				<UserProfile />
 			</UserContext.Provider>,
 		);
@@ -80,4 +94,16 @@ test('Shows user profile', async () => {
 	await wait();
 	let notificationList = screen.queryAllByLabelText('Notifications for', { exact: false });
 	expect(notificationList[0].value).toEqual('on');
+
+	let lastNameInput = screen.getByRole('textbox', { name: /User Last Name/i });
+	expect(lastNameInput.value).toEqual(mockProfileData.last_name);
 });
+const mockProfileData = {
+	id: 7,
+	fireBaseRefId: 'TKsk1wPNQpSYattL8OhIYE5fI123',
+	first_name: 'Adarshram',
+	last_name: 'developer',
+	email: 'adarsh.developer@gmail.com',
+	created_at: '2022-02-05T18:30:00.000Z',
+	updated_at: '2022-02-05T18:30:00.000Z',
+};
