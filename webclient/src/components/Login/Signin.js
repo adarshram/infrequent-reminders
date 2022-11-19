@@ -8,8 +8,7 @@ export default function Signin({ signinMethod, errors }) {
 	});
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		let signedUp = await signinMethod(formValues.email, formValues.password);
-		console.log(signedUp);
+		await signinMethod(formValues.email, formValues.password);
 	};
 	const handleChange = (e) => {
 		setFormValues({
@@ -75,7 +74,7 @@ export default function Signin({ signinMethod, errors }) {
 							</Grid>
 						</Grid>
 						<Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-							Save
+							Login
 						</Button>
 					</Box>
 				</Paper>

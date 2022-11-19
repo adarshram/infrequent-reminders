@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import { AppBar, IconButton, Badge, Typography, Toolbar, Button } from '@mui/material';
 import {
@@ -16,7 +16,9 @@ export default function Header({ text, onClose, onConfirm }) {
 
 	const pendingReminderObject = useContext(PendingReminderContext);
 	const pendingCounter = pendingReminderObject.count;
-
+	useEffect(() => {
+		document.title = 'Infrequent Scheduler';
+	}, []);
 	const userProfile = '/userProfile';
 	const dashBoard = '/';
 	const pending = '/pending';
@@ -63,11 +65,13 @@ export default function Header({ text, onClose, onConfirm }) {
 							}}
 						/>
 					</IconButton>
-					<PersonIcon
-						onClick={() => {
-							navigate(userProfile);
-						}}
-					/>
+					<IconButton color="inherit">
+						<PersonIcon
+							onClick={() => {
+								navigate(userProfile);
+							}}
+						/>
+					</IconButton>
 				</Toolbar>
 			</AppBar>
 		</>

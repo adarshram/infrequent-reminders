@@ -71,7 +71,26 @@ const useFbaseAuthUser = (fBaseAuthUser) => {
     },
   };
 
-  return [{ googleSignin: googleSignin, emailPassword }, errors];
+  const logOut = async () => {
+    try {
+      await auth.signOut();
+    } catch (err) {
+      if (hasText(err.message, 'Firebase: Error (auth/invalid-email).')) {
+        setAndClearError('Invalid Email');
+        return;
+      }
+      if (hasText(err.message, 'auth/wrong-password')) {
+        setAndClearError('Invalid Password');
+        return;
+      }
+
+      setAndClearError(err.message);
+      console.log(err.message);
+    }
+    return false;
+  };
+
+  return [{ googleSignin: googleSignin, emailPassword, logOut: logOut }, errors];
 };
 
 export default useFbaseAuthUser;

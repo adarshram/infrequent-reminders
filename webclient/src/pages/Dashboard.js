@@ -3,9 +3,11 @@ import { Paper, Grid, Alert } from '@mui/material';
 
 import { UserContext } from '../models/UserContext';
 import { PendingReminderContext } from '../models/PendingReminderContext';
+
 import { Link } from 'react-router-dom';
 
 import CalendarList from '../components/Schedules/CalendarList';
+import NotificationPrompter from '../components/NotificationPrompter';
 
 export default function DashBoard() {
 	const signedInUser = useContext(UserContext);
@@ -22,36 +24,39 @@ export default function DashBoard() {
 			return '';
 		}
 		return (
-			<Grid
-				item
-				xs={12}
-				sx={{
-					textAlign: 'center',
-					justifyContent: 'center',
-				}}
-			>
-				<Paper
-					sx={{
-						mt: 3,
-						width: '100%',
-					}}
-				>
-					{pendingCount > 0 ? (
-						<Alert severity="warning">
-							You have <Link to="/pending">{pendingCount} pending</Link> reminder
-							{pendingCount > 1 ? 's' : ''}
-						</Alert>
-					) : (
-						<Alert severity="success">You are all caught up !</Alert>
-					)}
-				</Paper>
-			</Grid>
+			<>
+				{pendingCount > 0 ? (
+					<Alert severity="warning">
+						You have <Link to="/pending">{pendingCount} pending</Link> reminder
+						{pendingCount > 1 ? 's' : ''}
+					</Alert>
+				) : (
+					<Alert severity="success">You are all caught up !</Alert>
+				)}
+			</>
 		);
 	};
 	return (
 		<>
 			<Grid container direction="row" justifyContent="center" spacing={1} alignItems="center">
-				<PendingCountDisplay />
+				<Grid
+					item
+					xs={12}
+					sx={{
+						textAlign: 'center',
+						justifyContent: 'center',
+					}}
+				>
+					<Paper
+						sx={{
+							mt: 3,
+							width: '100%',
+						}}
+					>
+						<PendingCountDisplay />
+						<NotificationPrompter />
+					</Paper>
+				</Grid>
 			</Grid>
 			<Paper
 				elevation={3}

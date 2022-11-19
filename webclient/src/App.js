@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { initializeFireBase } from './api/fireBaseUtility';
 import Axios from 'axios';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -23,13 +23,14 @@ import Footer from './components/footer';
 import Header from './components/header';
 
 import usePendingCount from './hooks/usePendingCount';
+import useProfileData from './hooks/useProfileData';
+import usePageLoader from './hooks/usePageLoader';
 
 import { Container, CssBaseline } from '@mui/material';
 import PrivateRoute from './components/routes/PrivateRoute';
 import { UserContext } from './models/UserContext';
 import { PendingReminderContext } from './models/PendingReminderContext';
 import FullPageLoader from './components/Loaders/FullPageLoader';
-import { getAuth } from 'firebase/auth';
 
 Axios.defaults.baseURL = process.env.REACT_APP_PROXY
   ? process.env.REACT_APP_PROXY
@@ -47,39 +48,30 @@ function App() {
     },
   });
   initializeFireBase();
-  const auth = getAuth();
-
-  const [userObject, setUserObject] = useState(null);
-  useEffect(() => {
-    let stateChangedSubscription = auth.onAuthStateChanged(function (user) {
-      if (user) {
-        Axios.defaults.headers.common['Authorization'] = user.accessToken
-          ? `Bearer ${user.accessToken}`
-          : ``;
-      }
-      setUserObject(user ? user : false);
-    });
-
-    return () => {
-      stateChangedSubscription();
-    };
-  }, [auth]);
-
+  const [userObject, userLoading] = usePageLoader();
   const [pendingCount, loadPendingCount] = usePendingCount();
-
+  const [profileData, profileLoading, , fetchProfile] = useProfileData();
   useEffect(() => {
     const hasPendingCountInitiated = !(pendingCount === null);
     if (userObject && !hasPendingCountInitiated) {
       loadPendingCount();
     }
   }, [userObject, pendingCount, loadPendingCount]);
-  const hasUserObjectInitiated = !(userObject === null);
+  useEffect(() => {
+    if (userObject) {
+      fetchProfile(true);
+    }
+  }, [fetchProfile, userObject]);
+  const hasUserObjectInitiated = !userLoading && !profileLoading;
 
   if (!hasUserObjectInitiated) {
     return <FullPageLoader />;
   }
-
-  const sharedUserObject = { user: userObject, setUser: setUserObject };
+  const sharedUserObject = {
+    user: userObject,
+    profile: profileData,
+    fetchProfile: fetchProfile,
+  };
   const pendingReminders = { count: pendingCount ? pendingCount : 0, load: loadPendingCount };
 
   return (

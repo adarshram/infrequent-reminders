@@ -13,7 +13,8 @@ import {
 
 import { UserContext } from '../models/UserContext';
 import useServerCall from '../hooks/useServerCall';
-import useProfileData from '../hooks/useProfileData';
+import useFbaseAuthUser from '../hooks/useFbaseAuthUser';
+
 import {
 	useNotificationDeviceList,
 	useEditNotificationForUser,
@@ -26,7 +27,8 @@ const defaultFormValues = {
 };
 export default function UserProfile() {
 	const signedInUser = useContext(UserContext);
-	const [profileData, , profileError, refreshProfile] = useProfileData();
+	const [{ logOut }] = useFbaseAuthUser(signedInUser.user);
+	const profileData = signedInUser.profile;
 
 	const [saveProfile, , ,] = useServerCall('/user/profile/save');
 	const [
@@ -39,19 +41,10 @@ export default function UserProfile() {
 
 	const [editNotificationCall] = useEditNotificationForUser();
 
-	const [formValues, setFormValues] = useState(defaultFormValues);
+	const [formValues, setFormValues] = useState(profileData ? profileData : defaultFormValues);
 
 	const [errors, setErrors] = useState([]);
 	const [messages, setMessages] = useState([]);
-
-	useEffect(() => {
-		if (signedInUser.user) {
-			if (profileData === null) {
-				setFormValues(defaultFormValues);
-				refreshProfile(true);
-			}
-		}
-	}, [refreshProfile, profileData, signedInUser.user]);
 
 	useEffect(() => {
 		if (profileData && profileData.email && formValues.email === '') {
@@ -67,10 +60,7 @@ export default function UserProfile() {
 				return appendedValues;
 			});
 		}
-		if (profileError && profileError.length > 0) {
-			console.log(profileError);
-		}
-	}, [profileData, profileError, formValues]);
+	}, [profileData, formValues]);
 
 	const validate = () => {
 		const validateEmail = (email) => {
@@ -117,8 +107,7 @@ export default function UserProfile() {
 		let success = await saveProfile.post(allFormValues);
 		if (success) {
 			setMessages(['Sucessfully Saved User']);
-			setFormValues(defaultFormValues);
-			refreshProfile(true);
+			signedInUser.fetchProfile(true);
 		}
 	};
 
@@ -136,9 +125,15 @@ export default function UserProfile() {
 		);
 		refreshNotificationList();
 	};
+	const logUserOut = async () => {
+		await logOut();
+		signedInUser.fetchProfile(true);
+	};
 
 	const { first_name, last_name, email } = formValues;
-
+	if (!signedInUser.user) {
+		return 'User Logged Out';
+	}
 	return (
 		<Box
 			sx={{
@@ -245,6 +240,11 @@ export default function UserProfile() {
 					<Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
 						Save
 					</Button>
+					{logOut && (
+						<Button fullWidth variant="text" sx={{ mt: 3, mb: 2 }} onClick={logUserOut}>
+							Logout
+						</Button>
+					)}
 				</Box>
 			</Paper>
 		</Box>
