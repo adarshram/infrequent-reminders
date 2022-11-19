@@ -90,7 +90,7 @@ export default function Login() {
 	}
 
 	if (userObject.user) {
-		return <Navigate to="/list" />;
+		return <Navigate to="/" />;
 	}
 	return <FullPageLoader />;
 }

@@ -5,6 +5,7 @@ import useFetchBrowserData from './useFetchBrowserData';
 export const useNotificationDeviceList = () => {
 	const [deviceList, setDeviceList] = useState([]);
 	const [currentDeviceToken, browserData] = useFetchBrowserData();
+	const [loaded, setLoaded] = useState(false);
 
 	const [hasNotificationEnabled, setHasNotificationEnabled] = useState(false);
 	const [listCall, notificationListResponse, ,] = useServerCall('/user/notificationDevices/list');
@@ -62,6 +63,7 @@ export const useNotificationDeviceList = () => {
 	}, [deviceList, browserData, currentDeviceToken]);
 
 	const refreshCall = async () => {
+		setLoaded(true);
 		listCall.get();
 	};
 
@@ -72,6 +74,7 @@ export const useNotificationDeviceList = () => {
 		hasNotificationEnabled,
 		notificationErrors,
 		refreshCall,
+		loaded,
 	];
 };
 export const useEditNotificationForUser = () => {
