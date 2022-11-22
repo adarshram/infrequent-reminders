@@ -5,12 +5,17 @@ import { NotificationLog } from '../entity/NotificationLog';
 
 export const getNotificationLogForUser = async (
 	user_id: string,
+	offset?: number,
+	limit?: number,
 ): Promise<[NotificationLog[], number]> => {
 	let userNotificationLog = await getRepository(NotificationLog).findAndCount({
 		relations: ['user_notifications'],
 		where: { user_id: user_id },
-		take: 10,
-		skip: 0,
+		order: {
+			created_at: 'DESC',
+		},
+		take: limit ?? 10,
+		skip: offset ?? 0,
 	});
 	//: Promise<[NotificationLog[], number]>
 	return userNotificationLog;

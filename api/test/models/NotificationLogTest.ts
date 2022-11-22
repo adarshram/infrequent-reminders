@@ -23,13 +23,14 @@ import { getTime } from 'date-fns';
 import {
   createRecordFromNotification,
   deleteNotificationLog,
+  getNotificationLogForUser,
 } from './../../src/models/NotificationLog';
 //npm test test\models\NotificationLogTest.ts -- --grep "get one from log"
 //npm test test\models\NotificationLogTest.ts -- --grep "save one to log"
 
 before(async () => {
   await establishDatabaseConnection();
-  await initializeFireBase();
+  //await initializeFireBase();
 });
 
 describe('send notification handlers', () => {
@@ -38,17 +39,28 @@ describe('send notification handlers', () => {
     let created = await createRecordFromNotification(oneNotification, 'device notification');
     expect(created.send_type).to.equal('device notification');
     expect(created.user_notifications.subject).to.equal(oneNotification.subject);
-
     //cleanup
     await deleteNotificationLog(created);
   }).timeout(10000);
   it('get one from log', async () => {
     let oneNotification = await getRepository(UserNotifications).findOne();
-    let created = await createRecordFromNotification(oneNotification, 'device notification');
-    expect(created.send_type).to.equal('device notification');
-    expect(created.user_notifications.subject).to.equal(oneNotification.subject);
+    let notificationLogs = [];
 
-    //cleanup
-    await deleteNotificationLog(created);
+    for (let i = 0; i < 5; i++) {
+      notificationLogs.push(
+        await createRecordFromNotification(oneNotification, `device notification ${i}`),
+      );
+    }
+    let retrievedLogs = await getNotificationLogForUser(oneNotification.user_id);
+    let [results, count] = retrievedLogs;
+    expect(results[0].send_type.indexOf('device notification') > -1).to.equal(true);
+    expect(count > 4).to.equal(true);
+
+    await Promise.all(
+      notificationLogs.map(async (current) => {
+        await deleteNotificationLog(current);
+        return true;
+      }),
+    );
   }).timeout(10000);
 });
