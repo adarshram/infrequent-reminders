@@ -1,4 +1,16 @@
 import { getMessagingObject, addToCollection, getFireStoreDbObject } from '../utils/firebase';
+
+export const getAllProfiles = async () => {
+	const vapidKeyObject = getVapidKeyObject();
+	const snapshot = await vapidKeyObject.get();
+	let results = [];
+	let allProfiles = snapshot.forEach((doc) => {
+		let data = doc.data();
+		results.push(data);
+	});
+	return results;
+};
+
 export const deleteForUser = async (fireBaseRefId: string) => {
 	const vapidKeyObject = getVapidKeyObject();
 	const snapshot = await vapidKeyObject.where('fireBaseRefId', '==', fireBaseRefId).get();

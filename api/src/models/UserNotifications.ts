@@ -85,6 +85,7 @@ export const getNotificationInMonthForUser = async (
 		.getRawMany();
 	return notifications;
 };
+
 export const getNotificationsForUserByDate = async (
 	user_id: String,
 	notification_date?: Date,

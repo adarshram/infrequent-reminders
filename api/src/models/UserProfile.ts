@@ -13,6 +13,7 @@ export const getUserProfileWithId = async (id: string) => {
 
 	return userProfile;
 };
+
 export const getUsersWithNotificationPreference = async (): Promise<
 	UserNotificationPreference[]
 > => {
@@ -211,4 +212,17 @@ export const sendNotificationToVapidKey = async (vapidKey, notification) => {
 		errors = [err?.errorInfo?.message ?? 'Unknown Error'];
 		return { success: success, errors: errors };
 	}
+};
+
+export const createUserInDbFromFireBase = async (fbAuthUser) => {
+	let userProfile = new UserProfile();
+	userProfile.first_name = fbAuthUser.displayName ?? '';
+	userProfile.last_name = fbAuthUser.displayName ?? '';
+	userProfile.email = fbAuthUser.email;
+	userProfile.fireBaseRefId = fbAuthUser.uid;
+	userProfile.created_at = new Date();
+	userProfile.updated_at = new Date();
+	const userProfileRepository = await getRepository(UserProfile);
+	const result = await userProfileRepository.save(userProfile);
+	return result;
 };

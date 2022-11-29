@@ -7,6 +7,7 @@ import {
 	getPendingNotifications,
 	snoozeNotificationObject,
 } from '../models/UserNotifications';
+import { createRecordFromNotification } from '../models/NotificationLog';
 import { UserNotifications } from '../entity/UserNotifications';
 import {
 	saveVapidKeyForUser,
@@ -37,10 +38,18 @@ export class PendingNotification {
 				user_id,
 				vapidKeyData,
 			);
+			await this.updateLogWithSendType(
+				notifications,
+				sentNotification ? 'Device Notification' : 'Device Notification Failed',
+			);
 		}
 
 		if (!sentNotification) {
 			sentNotification = await this.handleEmailNotificationForUser(notifications, user_id);
+			await this.updateLogWithSendType(
+				notifications,
+				sentNotification ? 'Email Notification' : 'Email Notification Failed',
+			);
 		}
 		if (sentNotification) {
 			let snoozedResults = await Promise.all(
@@ -50,7 +59,19 @@ export class PendingNotification {
 				}),
 			);
 		}
+
 		return sentNotification;
+	};
+
+	updateLogWithSendType = async (notificationArray: UserNotifications[], sendType: string) => {
+		let createdArray = await Promise.all(
+			notificationArray.map(async (currentNotification) => {
+				let created = await createRecordFromNotification(currentNotification, sendType);
+				return created;
+			}),
+		);
+
+		return createdArray;
 	};
 
 	handleVapidKeyNotificationForUser = async (

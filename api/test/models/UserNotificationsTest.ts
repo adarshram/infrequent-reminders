@@ -25,6 +25,7 @@ import {
 	getNotificationInMonthForUser,
 	getNotificationsForUserByDate,
 	getPendingNotifications,
+	getUsersWithPendingNotifications,
 } from './../../src/models/UserNotifications';
 import MetaNotificationsClass from './../../src/models/MetaNotifications';
 
@@ -43,6 +44,7 @@ before(async () => {
 });
 
 //npm test test\models\UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
+//npm test test\models\UserNotificationsTest.ts -- --grep "test distinct users with pending notifications"
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -68,12 +70,48 @@ describe('save new reminder set', () => {
 	};
 	const deleteNotificationsForUser = async (user_id: String) => {
 		let notificationListToClear = await getNotificationsForUser(user_id);
-		let idsToDelete = notificationListToClear.results.map(async (record) => {
-			if (record.id) {
-				await deleteNotification(record.id);
-			}
-		});
+		let idsToDelete = await Promise.all(
+			notificationListToClear.results.map(async (record) => {
+				if (record.id) {
+					await deleteNotification(record.id);
+				}
+			}),
+		);
 	};
+	it('test distinct users with pending notifications', async () => {
+		let previousDate = addDays(new Date(), -10);
+		let notificationParameters = {
+			user_id: '12345',
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: previousDate,
+			is_active: true,
+		};
+
+		let notifications = [];
+		let createdNotification = await createNotificationsForUser(notificationParameters);
+		notifications.push(createdNotification);
+
+		createdNotification = await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: addDays(new Date(), -5),
+		});
+		notifications.push(createdNotification);
+
+		createdNotification = await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: addDays(new Date(), -20),
+		});
+		notifications.push(createdNotification);
+
+		let pendingNotifications = await getUsersWithPendingNotifications();
+		expect(pendingNotifications.length > 0).to.be.equal(true);
+
+		//cleanup
+		await deleteNotificationsForUser(notificationParameters.user_id);
+	}).timeout(10000);
 
 	xit('deletes all dummy notifications', async () => {});
 	xit('marks notification as done', async () => {

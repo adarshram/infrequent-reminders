@@ -32,6 +32,16 @@ export const getAuthenticatedUser = async (idToken: string) => {
   let authenticatedResults = await getAuth(fireBase).verifyIdToken(idToken);
   return authenticatedResults;
 };
+export const getAllAuthenticatedUsers = async () => {
+  if (!fireBase) {
+    await initializeFireBase();
+  }
+  let listUsersResults = await getAuth().listUsers();
+  let allUsers = listUsersResults.users.map((current) => {
+    return current;
+  });
+  return allUsers;
+};
 export const getMessagingObject = async (): Promise<any> => {
   if (!fireBase) {
     await initializeFireBase();
