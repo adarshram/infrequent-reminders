@@ -1,7 +1,8 @@
-import { getRepository, getManager, MoreThanOrEqual } from 'typeorm';
+import { getRepository, getManager, MoreThanOrEqual, Raw } from 'typeorm';
 
 import { UserNotifications } from '../entity/UserNotifications';
 import { NotificationLog } from '../entity/NotificationLog';
+import { format } from 'date-fns';
 
 export const getNotificationLogForUser = async (
 	user_id: string,
@@ -17,7 +18,32 @@ export const getNotificationLogForUser = async (
 		take: limit ?? 10,
 		skip: offset ?? 0,
 	});
-	//: Promise<[NotificationLog[], number]>
+
+	return userNotificationLog;
+};
+
+export const getNotificationsByDate = async (
+	date: string,
+	userId?: string,
+): Promise<NotificationLog[]> => {
+	type WhereConstraintInterface = { created_at: any; user_id?: string };
+
+	let whereConstraints: WhereConstraintInterface = {
+		created_at: MoreThanOrEqual(new Date(date)),
+	};
+	if (userId) {
+		whereConstraints = {
+			...whereConstraints,
+			user_id: userId,
+		};
+	}
+
+	let userNotificationLog = await getRepository(NotificationLog).find({
+		where: whereConstraints,
+		order: {
+			created_at: 'DESC',
+		},
+	});
 	return userNotificationLog;
 };
 

@@ -20,13 +20,18 @@ import {
 	getNotificationInMonthForUser,
 	getNotificationsForUserByDate,
 } from './../../src/models/UserNotifications';
-import { differenceInCalendarDays, addDays } from 'date-fns';
+import {
+	createRecordFromNotification,
+	deleteNotificationLog,
+	getNotificationLogForUser,
+	getNotificationsByDate,
+} from './../../src/models/NotificationLog';
+import { differenceInCalendarDays, addDays, getTime, format } from 'date-fns';
 import { expect } from 'chai';
 import { stub } from 'sinon';
 
 import 'mocha';
 import { createConnection } from 'typeorm';
-import { getTime } from 'date-fns';
 
 import { PendingNotification } from './../../src/service/PendingNotification';
 
@@ -45,8 +50,6 @@ describe('notification data handler', () => {
 	});
 
 	it('process pending notification per user', async () => {
-		//83zkNxe3BtSpXsFgxrDgw49ktWj2
-
 		let pendingNotification = new PendingNotification();
 		stub(pendingNotification, 'getUsersWithNotification').resolves([
 			'83zkNxe3BtSpXsFgxrDgw49ktWj2',
@@ -85,6 +88,19 @@ describe('notification data handler', () => {
 				pendingNotification.send(userPendingNotifications, user_id);
 			}),
 		);
+		let [expectedNotificationLog, expectedCount] = await getNotificationLogForUser(
+			notificationParameters.user_id,
+		);
+		expect(expectedCount).to.equal(1);
+		let dateString = format(new Date(), 'yyyy-MM-dd');
+		let notificationLog = await getNotificationsByDate(dateString);
+		await Promise.all(
+			notificationLog.map(async (current) => {
+				deleteNotificationLog(current);
+				return true;
+			}),
+		);
+
 		await deleteNotification(notification.id);
 	}).timeout(10000);
 

@@ -13,6 +13,7 @@ export const getUserProfileWithId = async (id: string) => {
 
 	return userProfile;
 };
+
 export const getUsersWithNotificationPreference = async (): Promise<
 	UserNotificationPreference[]
 > => {
