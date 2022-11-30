@@ -19,6 +19,7 @@ import {
 import * as userVapidKeys from '../models/UserVapidKeys';
 
 import { sendNotificationMessageToVapidKey, sendNotificationEmail } from '../utils/notification';
+import { getCredentialsByKey } from '../models/SystemCredentials';
 
 export class PendingNotification {
 	getUsersWithNotification = async () => {
@@ -119,28 +120,33 @@ export class PendingNotification {
 		user_id: string,
 	): Promise<boolean> => {
 		let sendEmail = '';
-		let notificationPreference = await getNotificationPreferenceForUser(user_id);
-		if (!notificationPreference) {
+		let userProfile = await getUserProfileWithId(user_id);
+		if (!userProfile) {
 			return false;
 		}
 		sendEmail =
-			notificationPreference && notificationPreference.email && notificationPreference.email != ''
-				? notificationPreference.email
-				: '';
+			userProfile && userProfile.email && userProfile.email != '' ? userProfile.email : '';
 
 		if (sendEmail === '') {
-			let userProfile = await getUserProfileWithId(user_id);
-			if (!userProfile || !userProfile.email) {
-				return false;
-			}
-			sendEmail = userProfile.email;
+			return false;
 		}
-
 		let notificationSubject = `You have ${pending.length} Reminders overdue`;
 		if (pending.length == 1) {
 			notificationSubject = `Your Reminder ${pending[0].subject} is overdue`;
 		}
-		let { success, errors } = await sendNotificationEmail(sendEmail, notificationSubject);
+		let upcomingUrl = await this.getUpcomingUrl();
+		let notificationMessage = `Click <a href="${upcomingUrl}">here</a> to see your reminders`;
+
+		let { success, errors } = await sendNotificationEmail(
+			sendEmail,
+			notificationSubject,
+			notificationMessage,
+		);
 		return success;
+	};
+	getUpcomingUrl = async (): Promise<string> => {
+		const baseUrlData = await getCredentialsByKey('base_url');
+		const baseUrl = baseUrlData ? baseUrlData.settings_value : 'http://localhost:3006/';
+		return `${baseUrl}upcoming`;
 	};
 }
