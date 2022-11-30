@@ -1,8 +1,15 @@
 import { getMessagingObject } from './firebase';
+import { getCredentialsByKey } from '../models/SystemCredentials';
+
+const getUpcomingUrl = async () => {
+	const baseUrlData = await getCredentialsByKey('base_url');
+	let baseUrl = baseUrlData ? baseUrlData.settings_value : 'http://localhost:3006/';
+	return `${baseUrl}/upcoming`;
+};
 
 export const sendNotificationMessageToVapidKey = async (vapidKey, notificationMessage) => {
 	let messsagingObject = await getMessagingObject();
-
+	let upcomingUrl = await getUpcomingUrl();
 	const message = {
 		data: {
 			notificationMessage: notificationMessage,
@@ -13,7 +20,7 @@ export const sendNotificationMessageToVapidKey = async (vapidKey, notificationMe
 		},
 		webpush: {
 			fcm_options: {
-				link: `http://localhost:3006/upcoming`,
+				link: upcomingUrl,
 			},
 		},
 		token: vapidKey,
@@ -35,10 +42,14 @@ export const sendNotificationMessageToVapidKey = async (vapidKey, notificationMe
 	}
 	return { success, errors };
 };
-export const sendNotificationEmail = async (email: string, notificationMessage: string) => {
+export const sendNotificationEmail = async (
+	email: string,
+	notificationMessage: string,
+	notificationBody?: string,
+) => {
 	let nodemailer = require('nodemailer');
 	let subject = notificationMessage;
-	let body = notificationMessage;
+	let body = notificationBody ? notificationBody : notificationMessage;
 	let transporter = nodemailer.createTransport({
 		host: 'smtp.sendgrid.net',
 		port: 465,
@@ -53,21 +64,21 @@ export const sendNotificationEmail = async (email: string, notificationMessage: 
 	let mailOptions = {
 		from: 'adarsh.developer@gmail.com',
 		to: email,
-		subject: notificationMessage,
-		text: notificationMessage,
+		subject: subject,
+		html: body,
 	};
 
-	transporter.sendMail(mailOptions, function (error, info) {
-		if (error) {
-			success = false;
-			errors.push(error);
-			console.log(error);
-		} else {
-			console.log('Email sent: ' + info.response);
-			success = true;
-			error = [];
-		}
-	});
+	try {
+		let emailInfo = await transporter.sendMail(mailOptions);
+		console.log(emailInfo);
+		success = true;
+		errors = [];
+	} catch (err) {
+		success = false;
+		errors = [err.message ? err.message : 'Email Not Sent'];
+		errors.push(`Unable to send email to ${email}`);
+		console.log(errors);
+	}
 
 	return { success, errors };
 };

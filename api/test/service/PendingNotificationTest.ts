@@ -32,24 +32,25 @@ import { stub } from 'sinon';
 
 import 'mocha';
 import { createConnection } from 'typeorm';
-
+import { establishDatabaseConnection } from './../../src/utils/dataBase';
 import { PendingNotification } from './../../src/service/PendingNotification';
 
-//npm test test\service\PendingNotificationTest.ts -- --grep "sends notification per device"
+//npm test test\service\PendingNotificationTest.ts -- --grep "sends notification for specific user yMwuesozlicC6FSSGCaYmhK1Y6r1"
 
-before(async () => {
-	await createConnection();
-	await initializeFireBase();
-});
+before(async () => {});
 
 describe('notification data handler', () => {
 	it('gets users with notification', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
 		let pendingNotification = new PendingNotification();
 		let users = await pendingNotification.getUsersWithNotification();
 		expect(users.length > 0).to.equal(true);
 	});
 
 	it('process pending notification per user', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
 		let pendingNotification = new PendingNotification();
 		stub(pendingNotification, 'getUsersWithNotification').resolves([
 			'83zkNxe3BtSpXsFgxrDgw49ktWj2',
@@ -63,7 +64,29 @@ describe('notification data handler', () => {
 			}),
 		);
 	});
+
+	it('sends notification for specific user yMwuesozlicC6FSSGCaYmhK1Y6r1', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
+		let validUserId = 'yMwuesozlicC6FSSGCaYmhK1Y6r1';
+
+		let pendingNotification = new PendingNotification();
+		stub(pendingNotification, 'getUsersWithNotification').resolves([validUserId]);
+
+		let users = await pendingNotification.getUsersWithNotification();
+		await Promise.all(
+			users.map(async (user_id) => {
+				let userPendingNotifications = await pendingNotification.getPendingNotifications(user_id);
+				if (userPendingNotifications && userPendingNotifications.length) {
+					pendingNotification.send(userPendingNotifications, user_id);
+				}
+			}),
+		);
+	}).timeout(10000);
+
 	it('sends notification per device', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
 		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
 		let previousDate = addDays(new Date(), -5);
 		let notificationParameters = {
@@ -105,6 +128,8 @@ describe('notification data handler', () => {
 	}).timeout(10000);
 
 	it('sends notification to user and snooze it accordingly', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
 		let previousDate = addDays(new Date(), -5);
 		let notificationParameters = {
 			user_id: '12345',

@@ -28,3 +28,13 @@ export const getFirebaseCredentials = async (): Promise<FireBaseCredentials> => 
 	}
 	return settingsValue;
 };
+
+export const getCredentialsByKey = async (credentialsKey: string): Promise<SystemCredentials> => {
+	let whereConstraints = {
+		settings_key: credentialsKey,
+	};
+	let credentials = await getRepository(SystemCredentials).findOne({
+		where: whereConstraints,
+	});
+	return credentials;
+};
