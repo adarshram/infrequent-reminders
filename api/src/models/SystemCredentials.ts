@@ -19,13 +19,12 @@ interface FireBaseCredentials {
 }
 
 export const getFirebaseCredentials = async (): Promise<FireBaseCredentials> => {
-	const entityObject = await getRepository(SystemCredentials).createQueryBuilder('up');
-	entityObject.where(`up.settings_key = :value`, { value: 'firebase_credentials' });
-	const entityData = await entityObject.getOne();
+	let credentials = await getCredentialsByKey('firebase_credentials');
 	let settingsValue = undefined;
-	if (entityData) {
-		settingsValue = JSON.parse(entityData.settings_json_value);
+	if (!credentials) {
+		return settingsValue;
 	}
+	settingsValue = JSON.parse(credentials.settings_json_value);
 	return settingsValue;
 };
 
