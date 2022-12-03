@@ -1,8 +1,8 @@
-import { getRepository, getManager, MoreThanOrEqual, Raw } from 'typeorm';
+import { getRepository, getManager, MoreThanOrEqual, Raw, LessThanOrEqual, Between } from 'typeorm';
 
 import { UserNotifications } from '../entity/UserNotifications';
 import { NotificationLog } from '../entity/NotificationLog';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 
 export const getNotificationLogForUser = async (
 	user_id: string,
@@ -23,13 +23,13 @@ export const getNotificationLogForUser = async (
 };
 
 export const getNotificationsByDate = async (
-	date: string,
+	date: Date,
 	userId?: string,
 ): Promise<NotificationLog[]> => {
 	type WhereConstraintInterface = { created_at: any; user_id?: string };
 
 	let whereConstraints: WhereConstraintInterface = {
-		created_at: MoreThanOrEqual(new Date(date)),
+		created_at: MoreThanOrEqual(date),
 	};
 	if (userId) {
 		whereConstraints = {
@@ -45,6 +45,28 @@ export const getNotificationsByDate = async (
 		},
 	});
 	return userNotificationLog;
+};
+export const getNotificationsForToday = async (userId: string): Promise<UserNotifications[]> => {
+	//: Promise<UserNotifications[]>
+	let today = new Date();
+	let nextDay = addDays(today, 1);
+	let whereConstraints = {
+		created_at: Between(today, nextDay),
+		user_id: userId,
+	};
+	let userNotificationLog = await getRepository(NotificationLog).find({
+		relations: ['user_notifications'],
+		where: whereConstraints,
+		order: {
+			created_at: 'DESC',
+		},
+	});
+
+	let userNotifications = userNotificationLog.map((currentNotificationLog) => {
+		return currentNotificationLog.user_notifications;
+	});
+
+	return userNotifications;
 };
 
 export const deleteNotificationLog = async (

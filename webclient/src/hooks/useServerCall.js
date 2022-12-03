@@ -30,9 +30,9 @@ const useServerCall = (endPoint) => {
       let res = await Axios.post(endPoint, parameters);
       setLoading(false);
       return res.data ? res.data : [];
-    } catch (e) {
+    } catch (err) {
       setLoading(false);
-      throw e;
+      setErrors(err.response?.data ? err.response.data.message : err.message);
     }
   };
 
@@ -61,10 +61,11 @@ const useServerCall = (endPoint) => {
       setLoading(true);
       let res = await Axios.get(url);
       setLoading(false);
+
       return res.data ? res.data : [];
     } catch (err) {
       setLoading(false);
-      throw err;
+      setErrors(err.response?.data ? err.response.data.message : err.message);
     }
   };
 

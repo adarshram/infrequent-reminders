@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 
-import { Box, Paper, Alert, List, ListItem, ListItemText, Snackbar } from '@mui/material';
+import {
+	Box,
+	Paper,
+	Alert,
+	List,
+	ListItem,
+	ListItemText,
+	Snackbar,
+	Typography,
+} from '@mui/material';
 //Snooze
 
 import { useNavigate } from 'react-router-dom'; // version 5.2.0
 import useServerCall from '../hooks/useServerCall';
+import useTodaysNotifications from '../hooks/useTodaysNotifications';
+
 import ShowSchedule from '../components/Schedules/ShowSchedule';
 export default function UpcomingNotifications(props) {
 	let navigate = useNavigate();
@@ -22,7 +33,8 @@ export default function UpcomingNotifications(props) {
 
 	const [snoozeNotification, , ,] = useServerCall('/user/notifications/snooze/');
 	const [completeNotification, , ,] = useServerCall('/user/notifications/complete/');
-
+	const [todaysNotifications, loadingTodaysNotifications, , fetchTodaysNotifications] =
+		useTodaysNotifications();
 	useEffect(() => {
 		if (!upcomingNotificationError) {
 			if (upcomingNotificationLoading === false && upcomingNotificationResponse === false) {
@@ -43,6 +55,11 @@ export default function UpcomingNotifications(props) {
 		upcomingNotificationLoading,
 		upcomingNotificationError,
 	]);
+	useEffect(() => {
+		if (todaysNotifications === null) {
+			fetchTodaysNotifications();
+		}
+	});
 
 	const handleDone = async (currentNotification) => {
 		let completed = await completeNotification.get(currentNotification.id);
@@ -75,21 +92,88 @@ export default function UpcomingNotifications(props) {
 		return true;
 	};
 
+	const ShowTodaysNotification = ({ notifications, loadingNotifications }) => {
+		const hasNotifications = notifications && notifications.length > 0;
+		const hasNoNotifications = notifications && notifications.length === 0;
+
+		const HeaderBar = () => (
+			<Typography variant="h4" gutterBottom>
+				Todays Notifications
+			</Typography>
+		);
+
+		if (loadingNotifications || hasNoNotifications) {
+			return (
+				<>
+					<HeaderBar />
+					<List>
+						<ListItem>
+							{loadingNotifications && <ListItemText>Loading todays notifications</ListItemText>}
+							{hasNoNotifications && <ListItemText>No Notifications Found For Today</ListItemText>}
+						</ListItem>
+					</List>
+				</>
+			);
+		}
+
+		if (hasNotifications) {
+			return (
+				<>
+					<List>
+						<HeaderBar />
+						{notifications.map((notification, key) => (
+							<ShowSchedule
+								schedule={notification}
+								key={key}
+								editHandler={handleEdit}
+								snoozeOrCompleteHandler={handleSnooze}
+								deleteHandler={handleDelete}
+								doneHandler={handleDone}
+								setCurrentSchedule={setCurrentSchedule}
+								currentSchedule={currentSchedule}
+							/>
+						))}
+					</List>
+				</>
+			);
+		}
+
+		return <HeaderBar />;
+	};
+
 	return (
 		<Box
 			sx={{
-				display: 'flex',
 				justifyContent: 'center',
 			}}
 		>
 			<Paper
 				variant="outlined"
 				sx={{
-					width: [300, 500, '90%'],
+					width: '90%',
 					bgcolor: 'grey.50',
+					margin: 1,
+					padding: 1,
+				}}
+			>
+				<ShowTodaysNotification
+					notifications={todaysNotifications}
+					loadingNotifications={loadingTodaysNotifications}
+				/>
+			</Paper>
+			<Paper
+				variant="outlined"
+				sx={{
+					width: '90%',
+					bgcolor: 'grey.50',
+					margin: 1,
+					padding: 1,
 				}}
 			>
 				<List>
+					<Typography variant="h4" gutterBottom>
+						Upcoming Notifications
+					</Typography>
 					{!upcomingNotificationLoading &&
 						notificationList &&
 						notificationList.length > 0 &&
