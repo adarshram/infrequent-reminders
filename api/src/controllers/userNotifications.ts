@@ -12,6 +12,7 @@ import {
   getNotificationInMonthForUser,
   getNotificationsForUserByDate,
 } from '../models/UserNotifications';
+import { getNotificationsForToday } from '../models/NotificationLog';
 import MetaNotificationsClass from '../models/MetaNotifications';
 import { successResponse, errorResponse } from '../responses';
 
@@ -103,12 +104,25 @@ export const pendingNotifications = async (req: Request, res: Response) => {
 export const upcomingNotifications = async (req: Request, res: Response) => {
   const fBaseUser = res.locals.user;
   let results = await getNotificationsForThisWeek(fBaseUser.uid);
-  console.log(results);
   if (results.length) {
     successResponse(res, results);
     return;
   }
   errorResponse(res, 'No Notifications for this week');
+};
+export const todaysNotifications = async (req: Request, res: Response) => {
+  const fBaseUser = res.locals.user;
+  let results = await getNotificationsForToday(fBaseUser.uid);
+  const hasResults = results && results.length;
+  const isEmpty = results && results.length === 0;
+  const hasError = !results;
+
+  if (hasResults || isEmpty) {
+    successResponse(res, results);
+    return;
+  }
+
+  errorResponse(res, 'No Notifications for today');
 };
 
 export const pendingNotificationCount = async (req: Request, res: Response) => {

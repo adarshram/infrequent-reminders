@@ -24,9 +24,11 @@ import {
   createRecordFromNotification,
   deleteNotificationLog,
   getNotificationLogForUser,
+  getNotificationsByDate,
+  getNotificationsForToday,
 } from './../../src/models/NotificationLog';
 //npm test test\models\NotificationLogTest.ts -- --grep "get one from log"
-//npm test test\models\NotificationLogTest.ts -- --grep "save one to log"
+//npm test test\models\NotificationLogTest.ts -- --grep "get notification log for date"
 
 before(async () => {
   await establishDatabaseConnection();
@@ -34,6 +36,24 @@ before(async () => {
 });
 
 describe('send notification handlers', () => {
+  it('get notification log for date', async () => {
+    //    await establishDatabaseConnection();
+    let oneNotification = await getRepository(UserNotifications).findOne();
+
+    let created = await createRecordFromNotification(oneNotification, 'device notification');
+    let notifications = await getNotificationsForToday(oneNotification.user_id);
+    let hasOneNoticationInResults = false;
+    notifications.map((currentNotification) => {
+      if (currentNotification.id === oneNotification.id) {
+        hasOneNoticationInResults = true;
+      }
+    });
+    expect(hasOneNoticationInResults).to.equal(true);
+    //cleanup
+    await deleteNotificationLog(created);
+
+    //cleanup
+  }).timeout(10000);
   it('save one to log', async () => {
     let oneNotification = await getRepository(UserNotifications).findOne();
     let created = await createRecordFromNotification(oneNotification, 'device notification');

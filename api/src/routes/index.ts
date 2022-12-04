@@ -27,6 +27,7 @@ export const attachPrivateRoutes = (app: any): void => {
 
   app.get('/user/notifications/pending', authRoute, userNotifications.pendingNotifications);
   app.get('/user/notifications/upcoming', authRoute, userNotifications.upcomingNotifications);
+  app.get('/user/notifications/today', authRoute, userNotifications.todaysNotifications);
 
   app.get('/user/notifications/snooze/:id', authRoute, userNotifications.snoozeNotifications);
   app.get(

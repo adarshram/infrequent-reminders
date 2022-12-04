@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-//import DatePicker from '@mui/lab/DatePicker';
+
 import { DatePicker } from '@mui/x-date-pickers';
 import { Grid, Alert, TextField, MenuItem } from '@mui/material';
-//import LocalizationProvider from '@mui/lab/LocalizationProvider';
-//import LocalizationProvider from '@mui/x-date-pickers/LocalizationProvider';
+
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import DateAdapter from '@mui/lab/AdapterDateFns';
 import { format, add } from 'date-fns';
@@ -65,10 +64,10 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 			return newState;
 		});
 	};
-	const updateDateInForm = (newDate) => {
+	const updateDateInForm = (newDate, secondValue) => {
 		let newDateHasValue = newDate !== null;
 		setHasUserChangedDate(newDateHasValue);
-		updateFormValues('notification_date', newDate);
+		updateFormValues('notification_date', format(newDate, 'MM/dd/yyyy'));
 	};
 	return (
 		<Grid container spacing={2} alignItems="center">
@@ -148,6 +147,7 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 			<Grid item xs={12}>
 				<LocalizationProvider dateAdapter={DateAdapter}>
 					<DatePicker
+						showDaysOutsideCurrentMonth
 						label="Enter First Recurring date"
 						value={notification_date}
 						onChange={(value) => updateDateInForm(value)}
