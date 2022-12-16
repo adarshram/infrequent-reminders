@@ -211,7 +211,11 @@ export const getSetById = async (id: number): Promise<NotificationSet> => {
 	return notificationSet;
 };
 
-export const getLinkedReminders = async (set_id: number): Promise<UserNotifications[]> => {
+interface LinkedUserNotifications extends UserNotifications {
+	days_after?: number;
+}
+
+export const getLinkedReminders = async (set_id: number): Promise<LinkedUserNotifications[]> => {
 	let notifications = await getManager()
 		.createQueryBuilder(UserNotifications, 'up')
 		//.innerJoin(NotificationSetLink, 'nst', 'nst.user_notification_id = up.id')
@@ -220,7 +224,15 @@ export const getLinkedReminders = async (set_id: number): Promise<UserNotificati
 		.where(`set_id = :value`, { value: set_id })
 		.orderBy('nst.order', 'ASC')
 		.getMany();
-	return notifications;
+	let mergedNotificationData = notifications.map((notification) => {
+		let mergedNotification = notification as LinkedUserNotifications;
+		if (notification.link) {
+			mergedNotification.days_after = notification.link.days_after;
+		}
+		return mergedNotification;
+	});
+
+	return mergedNotificationData;
 };
 interface NotificationSetWithCount extends NotificationSet {
 	no_sets?: number;
