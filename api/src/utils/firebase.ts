@@ -8,6 +8,19 @@ import { getFirebaseCredentials } from '../models/SystemCredentials';
 
 let fireBase = undefined;
 let fireStoreDbObject: boolean | any;
+let fireBaseCredentials = {
+  type: 'service_account',
+  private_key_id: process.env.FIREBASE_private_key_id,
+  project_id: 'infrequent-scheduler',
+  private_key: process.env.FIREBASE_private_key.replace(/\\n/g, '\n'),
+  client_email: 'infrequent-scheduler@appspot.gserviceaccount.com',
+  client_id: process.env.FIREBASE_client_id,
+  auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+  token_uri: 'https://oauth2.googleapis.com/token',
+  auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+  client_x509_cert_url:
+    'https://www.googleapis.com/robot/v1/metadata/x509/infrequent-scheduler%40appspot.gserviceaccount.com',
+};
 export const initializeFireBase = async () => {
   const serviceAccount = await getFirebaseCredentials();
   let serviceAccount1 = serviceAccount as unknown as string;
@@ -23,6 +36,8 @@ export const initializeFireBase = async () => {
     credential: cert(serviceAccount1),
   };
   fireBase = initializeApp(firebaseConfig);
+
+  return fireBase;
 };
 
 export const getAuthenticatedUser = async (idToken: string) => {
@@ -72,6 +87,21 @@ export const getFireStoreDbObject = () => {
     fireStoreDbObject = getFirestore();
   }
   return fireStoreDbObject;
+};
+export const getResultsFromSnapshot = (snapshot) => {
+  let results = [];
+  if (snapshot.empty) {
+    return [];
+  }
+  snapshot.forEach(async (doc) => {
+    let data = doc.data();
+    let fullData = {
+      id: doc.id,
+      ...data,
+    };
+    results.push(fullData);
+  });
+  return results;
 };
 
 export const updateCollection = async (collectionName, data, id) => {};

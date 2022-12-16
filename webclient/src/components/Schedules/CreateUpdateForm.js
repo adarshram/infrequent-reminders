@@ -67,8 +67,13 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 	const updateDateInForm = (newDate, secondValue) => {
 		let newDateHasValue = newDate !== null;
 		setHasUserChangedDate(newDateHasValue);
-		updateFormValues('notification_date', format(newDate, 'MM/dd/yyyy'));
+		try {
+			updateFormValues('notification_date', format(newDate, 'MM/dd/yyyy'));
+		} catch (e) {
+			updateFormValues('notification_date', newDate);
+		}
 	};
+
 	return (
 		<Grid container spacing={2} alignItems="center">
 			<Grid item xs={12}>

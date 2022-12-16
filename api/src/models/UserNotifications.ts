@@ -508,15 +508,19 @@ export const completeLinkedSetIfPresent = async (id: number): Promise<DateReturn
 		return undefined;
 	}
 	const userNotificationsRepository = await getRepository(UserNotifications);
+	let mainNotification = await userNotificationsRepository.findOne({
+		relations: ['meta_notifications'],
+		where: { id: id },
+	});
 
-	let mainNotification = await getById(UserNotifications, id);
-	if (mainNotification && mainNotification instanceof UserNotifications) {
+	if (mainNotification) {
 		mainNotification.is_active = false;
 		mainNotification.updated_at = new Date();
 		if (mainNotification.meta_notifications) {
 			mainNotification.meta_notifications.done_count =
 				mainNotification.meta_notifications.done_count + 1;
 		}
+
 		await userNotificationsRepository.save(mainNotification);
 
 		let linkedNotification = await getLinkedNotificationByNotificationId(mainNotification.id);

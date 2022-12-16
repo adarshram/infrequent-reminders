@@ -26,10 +26,15 @@ export default function SingleReminder({
 	isCurrentReminder,
 }) {
 	const daysOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-	const handleDateChange = (key, value) => {};
+	const handleDateChange = (key, value) => {
+		onChange(key, value);
+	};
 
 	const handleChange = (e) => {
-		onChange(e);
+		onChange(e.target.id, e.target.value);
+	};
+	const handleSelectChange = (e) => {
+		onChange(e.target.name, e.target.value);
 	};
 	const handleRemoveClick = () => {
 		if (handleRemove) {
@@ -86,10 +91,10 @@ export default function SingleReminder({
 				<Select
 					labelId="demo-simple-select-label"
 					id="days_after"
-					value={reminderData?.link?.days_after ?? 1}
+					value={reminderData?.days_after ?? 1}
 					label="Remind After"
 					name={`days_after`}
-					onChange={handleChange}
+					onChange={handleSelectChange}
 				>
 					<MenuItem value={0}>After</MenuItem>
 					{daysOptions.map((day, k) => (

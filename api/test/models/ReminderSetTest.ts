@@ -16,14 +16,15 @@ import {
 	getNotificationById,
 	completeNotification,
 } from './../../src/models/UserNotifications';
-
+import { differenceInDays } from 'date-fns';
 import { expect } from 'chai';
 import 'mocha';
-import { createConnection } from 'typeorm';
-import { getTime } from 'date-fns';
 
+import { getTime } from 'date-fns';
+import { establishDatabaseConnection } from './../../src/utils/dataBase';
+//npm test test\models\ReminderSetTest.ts -- --grep "gets reminder set data and reminders"
 before(async () => {
-	await createConnection();
+	await establishDatabaseConnection();
 });
 
 describe('save new reminder set', () => {
@@ -111,8 +112,8 @@ describe('save new reminder set', () => {
 
 			expect(linkedReminders[0].meta.done_count).to.be.equal(1);
 			if (linkedReminders[0]?.link) {
-				expect(linkedReminders[0].link).to.have.property('days_after');
 				expect(linkedReminders[0].link.complete).to.be.equal(true);
+				expect(linkedReminders[0].link.days_after).to.be.equal(linkedReminders[0].days_after);
 			}
 			let userNotification = await getNotificationById(
 				linkedReminders[1].id,
@@ -123,9 +124,15 @@ describe('save new reminder set', () => {
 			expect(notificationSet.subject).to.be.equal(validReminderData.subject);
 			expect(linkedReminders.length).to.be.equal(2);
 
+			let nextNotificationDays = differenceInDays(
+				new Date(linkedReminders[1].notification_date),
+				new Date(linkedReminders[0].notification_date),
+			);
+			expect(nextNotificationDays).to.be.equal(linkedReminders[0]['days_after'] * 1);
+
 			await deleteNotificationSet(notificationResult.id);
 		}
-	});
+	}).timeout(10000);
 	xit('saves reminder set subject and description', async () => {
 		let validReminderData = {
 			...reminderData,

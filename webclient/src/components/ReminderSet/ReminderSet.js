@@ -5,10 +5,9 @@ import { Button, Grid, List } from '@mui/material';
 export default function ReminderSet({ reminders, setReminders, showSave }) {
 	const [dateKey, setDateKey] = useState(0);
 
-	const editReminder = (e, key) => {
+	const editReminder = (key, changedKey, changedValue) => {
 		const changedReminders = [...reminders];
-		changedReminders[key][e.target.id] = e.target.value;
-
+		changedReminders[key][changedKey] = changedValue;
 		setReminders(changedReminders);
 	};
 
@@ -84,7 +83,9 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 								<>
 									<SingleReminder
 										reminderData={reminder}
-										onChange={(e) => editReminder(e, key)}
+										onChange={(changedKey, changedValue) => {
+											editReminder(key, changedKey, changedValue);
+										}}
 										isFirst={key === dateKey}
 										handleRemove={(reminder) => removeReminder(key)}
 										key={`${key}-something`}
