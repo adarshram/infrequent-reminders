@@ -16,7 +16,7 @@ import {
 	getNotificationById,
 	completeNotification,
 } from './../../src/models/UserNotifications';
-
+import { differenceInDays } from 'date-fns';
 import { expect } from 'chai';
 import 'mocha';
 
@@ -123,6 +123,12 @@ describe('save new reminder set', () => {
 
 			expect(notificationSet.subject).to.be.equal(validReminderData.subject);
 			expect(linkedReminders.length).to.be.equal(2);
+
+			let nextNotificationDays = differenceInDays(
+				new Date(linkedReminders[1].notification_date),
+				new Date(linkedReminders[0].notification_date),
+			);
+			expect(nextNotificationDays).to.be.equal(linkedReminders[0]['days_after'] * 1);
 
 			await deleteNotificationSet(notificationResult.id);
 		}
