@@ -32,19 +32,20 @@ import MetaNotificationsClass from './../../src/models/MetaNotifications';
 import { differenceInCalendarDays, addDays, getUnixTime } from 'date-fns';
 import { expect } from 'chai';
 import 'mocha';
-import { createConnection } from 'typeorm';
-import { getTime } from 'date-fns';
+import { establishDatabaseConnection } from './../../src/utils/dataBase';
+import { calculateNextNotification } from './../../src/utils/dateManipulators';
+import { getTime, format } from 'date-fns';
 
 import { MetaNotifications } from './../../src/entity/MetaNotifications';
 import { UserNotifications } from './../../src/entity/UserNotifications';
 import { getRepository, getManager } from 'typeorm';
 
 before(async () => {
-	await createConnection();
+	await establishDatabaseConnection();
 });
 
 //npm test test\models\UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
-//npm test test\models\UserNotificationsTest.ts -- --grep "test distinct users with pending notifications"
+//npm test test/models/UserNotificationsTest.ts -- --grep "notification month for user"
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -114,6 +115,7 @@ describe('save new reminder set', () => {
 	}).timeout(10000);
 
 	xit('deletes all dummy notifications', async () => {});
+
 	xit('marks notification as done', async () => {
 		let validReminderData = {
 			...reminderData,
@@ -189,6 +191,36 @@ describe('save new reminder set', () => {
 			await deleteNotification(notification.id);
 		}
 	});
+
+	it('test complete notification', async () => {
+		let nextDate = addDays(new Date(), 5);
+
+		let notificationParameters = {
+			user_id: '123',
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: nextDate,
+			is_active: true,
+		};
+
+		let createdNotification = await createNotificationsForUser(notificationParameters);
+		await completeNotification(createdNotification.id, createdNotification.user_id);
+		let updatedNotification = await getNotificationById(
+			createdNotification.id,
+			createdNotification.user_id,
+		);
+		let nextNotificationResult = calculateNextNotification(
+			new Date(),
+			createdNotification.frequency,
+			createdNotification.frequency_type,
+		);
+		let expectedDate = format(nextNotificationResult.date, 'yyyy-MM-dd');
+		let completedDate = format(updatedNotification.notification_date, 'yyyy-MM-dd');
+		expect(completedDate).to.be.equal(expectedDate);
+		await deleteNotification(createdNotification.id);
+	});
 	xit('get_notification with done count', async () => {
 		let previousDate = addDays(new Date(), 5);
 
@@ -239,7 +271,32 @@ describe('save new reminder set', () => {
 			await deleteNotification(id);
 		});
 	});
-	xit('notification month for user', async () => {
+	const createNotificationSetForUser = async (user_id: string) => {
+		let validReminderData = {
+			user_id: user_id,
+			...reminderData,
+		};
+		const notificationResult = await saveSetFromRequest(validReminderData);
+		if (typeof notificationResult !== 'boolean') {
+			let today = format(new Date(), 'yyyy-MM-dd');
+			let singleNotificationParams = {
+				...reminderData.reminders[0],
+				notification_date: new Date(today),
+				set_id: notificationResult.id,
+				user_id: user_id,
+			};
+
+			let index = 0;
+			let firstNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+
+			index++;
+			let secondNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+
+			return notificationResult;
+		}
+	};
+
+	it('notification month for user', async () => {
 		//getNotificationInMonthForUser
 		let notificationParameters = {
 			user_id: '123',
@@ -268,41 +325,33 @@ describe('save new reminder set', () => {
 		expect(notificationsByMonth[0]['notifications']).to.be.equal('2');
 		expect(notificationsByMonth[1]['notifications']).to.be.equal('1');
 
-		//clear
-		await deleteNotificationsForUser(notificationParameters.user_id);
-	});
-
-	xit('notification month for user', async () => {
-		//getNotificationInMonthForUser
-		let notificationParameters = {
-			user_id: '123',
-			subject: '12312312',
-			description: 'scdsacsac',
-			frequency_type: 'w',
-			frequency: 1,
-			notification_date: new Date('2022-08-02'),
-			is_active: true,
-		};
-		await deleteNotificationsForUser(notificationParameters.user_id);
-
-		await createNotificationsForUser(notificationParameters);
-		await createNotificationsForUser(notificationParameters);
-		await createNotificationsForUser({
-			...notificationParameters,
-			notification_date: addDays(new Date('2022-08-02'), 5),
-			description: 'gfdgfdgfdg',
-		});
-
-		//test
 		let notificationByDate = await getNotificationsForUserByDate(
 			notificationParameters.user_id,
 			new Date('2022-08-02'),
 		);
-		console.log(notificationByDate);
+		expect(notificationByDate.total * 1).to.be.equal(2);
+		expect(notificationByDate.results[0].subject).to.be.equal(notificationParameters.subject);
+
+		//test notification set
+		let notificationSet = await createNotificationSetForUser(notificationParameters.user_id);
+
+		let today = format(new Date(), 'yyyy-MM-dd');
+
+		notificationByDate = await getNotificationsForUserByDate(
+			notificationParameters.user_id,
+			new Date(today),
+		);
+		//the link should have data as we just created one
+		expect(notificationByDate.results[0].set_link.set_id * 1).to.be.equal(notificationSet.id);
+		if (typeof notificationSet !== 'boolean') {
+			await deleteNotificationSet(notificationSet.id);
+		}
 
 		//clear
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	});
+
+	it('snoozes notifications depending on cron count', async () => {});
 	it('snoozes notifications depending on cron count', async () => {
 		let previousDate = addDays(new Date(), -5);
 
@@ -466,4 +515,3 @@ describe('save new reminder set', () => {
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	}).timeout(10000);
 });
-//npm test test\models\UserNotificationsTest.ts -- --grep "snooze notification"
