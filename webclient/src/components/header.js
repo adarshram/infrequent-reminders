@@ -36,8 +36,8 @@ export default function Header({ text, onClose, onConfirm }) {
 						<Button variant="text" color="neutral" onClick={() => navigate(dashBoard)}>
 							Dashboard
 						</Button>
-						<Button variant="text" color="neutral" onClick={() => navigate('/list')}>
-							List
+						<Button variant="text" color="neutral" onClick={() => navigate('/set/list')}>
+							Sets
 						</Button>
 					</Typography>
 					<Typography

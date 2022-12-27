@@ -76,7 +76,13 @@ export default function ListSchedules() {
 	};
 
 	const handleEdit = (data) => {
-		if (data.id) {
+		let isPartOfSet = data.set_link && data.set_link.set_id;
+
+		if (isPartOfSet) {
+			navigate(`/set/edit/${data.set_link.set_id}`);
+			return;
+		}
+		if (!isPartOfSet && data.id) {
 			navigate(`/create/${data.id}`);
 		}
 	};

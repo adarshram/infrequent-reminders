@@ -45,6 +45,10 @@ interface NotificationParameters {
 }
 export interface NotificationObject extends UserNotifications {
 	isPending?: boolean;
+	set_link?: NotificationSetLink;
+	is_pending?: boolean;
+	snooze_count?: number;
+	done_count?: number;
 }
 
 export interface NotificationObjectOld {
@@ -86,6 +90,34 @@ export const getNotificationInMonthForUser = async (
 	return notifications;
 };
 
+const getNotificationObjectForList = async () => {
+	let notificationObject = await getManager()
+		.createQueryBuilder(UserNotifications, 'up')
+		.leftJoinAndMapOne('up.meta', MetaNotifications, 'meta', 'meta.notification_id = up.id')
+		.leftJoinAndMapOne(
+			'up.set_link',
+			NotificationSetLink,
+			'notification_set_link',
+			'notification_set_link.user_notification_id = up.id',
+		);
+	return notificationObject;
+};
+const formatNotificationForController = (notifications: NotificationObject[]) => {
+	let today = new Date();
+	let controllerFormattedNotifications = notifications.map(function (notification) {
+		notification.is_pending = isBefore(notification.notification_date, today);
+		notification.snooze_count = 0;
+		notification.done_count = 0;
+		if (notification.meta) {
+			let meta = notification.meta;
+			notification.snooze_count = meta.cron_snoozed + meta.user_snoozed;
+			notification.done_count = meta.done_count;
+		}
+		return notification;
+	});
+	return controllerFormattedNotifications;
+};
+
 export const getNotificationsForUserByDate = async (
 	user_id: String,
 	notification_date?: Date,
@@ -107,6 +139,12 @@ export const getNotificationsForUserByDate = async (
 		let baseListQuery = await getManager()
 			.createQueryBuilder(UserNotifications, 'up')
 			.leftJoinAndMapOne('up.meta', MetaNotifications, 'meta', 'meta.notification_id = up.id')
+			.leftJoinAndMapOne(
+				'up.set_link',
+				NotificationSetLink,
+				'notification_set_link',
+				'notification_set_link.user_notification_id = up.id',
+			)
 			.where('up.user_id = :user_id', { user_id: user_id })
 			.andWhere('up.is_active = :is_active', { is_active: 1 });
 		if (notification_date) {
@@ -116,60 +154,16 @@ export const getNotificationsForUserByDate = async (
 		}
 		notifications = await baseListQuery.getMany();
 	}
-	let today = new Date();
-	let controllerFormattedNotifications = notifications.map(function (notification) {
-		notification.is_pending = isBefore(notification.notification_date, today);
-		notification.snooze_count = 0;
-		notification.done_count = 0;
-		if (notification.meta) {
-			let meta = notification.meta;
-			notification.snooze_count = meta.cron_snoozed + meta.user_snoozed;
-			notification.done_count = meta.done_count;
-		}
-		return notification;
-	});
+	let controllerFormattedNotifications = formatNotificationForController(notifications);
 
 	return {
 		total: total,
 		results: controllerFormattedNotifications,
 	};
 };
-
 export const getNotificationsForUser = async (user_id: String): Promise<ReturnResults> => {
-	const userNotificationsRepository = await getRepository(UserNotifications);
-
-	let { total } = await userNotificationsRepository
-		.createQueryBuilder('up')
-		.select('count(up.*)', 'total')
-		.where('up.user_id = :user_id', { user_id: user_id })
-		.andWhere('up.is_active = :is_active', { is_active: 1 })
-		.getRawOne();
-	let notifications = [];
-	if (total > 0) {
-		notifications = await getManager()
-			.createQueryBuilder(UserNotifications, 'up')
-			.leftJoinAndMapOne('up.meta', MetaNotifications, 'meta', 'meta.notification_id = up.id')
-			.where('up.user_id = :user_id', { user_id: user_id })
-			.andWhere('up.is_active = :is_active', { is_active: 1 })
-			.getMany();
-	}
-	let today = new Date();
-	let controllerFormattedNotifications = notifications.map(function (notification) {
-		notification.is_pending = isBefore(notification.notification_date, today);
-		notification.snooze_count = 0;
-		notification.done_count = 0;
-		if (notification.meta) {
-			let meta = notification.meta;
-			notification.snooze_count = meta.cron_snoozed + meta.user_snoozed;
-			notification.done_count = meta.done_count;
-		}
-		return notification;
-	});
-
-	return {
-		total: total,
-		results: controllerFormattedNotifications,
-	};
+	let results = await getNotificationsForUserByDate(user_id);
+	return results;
 };
 
 export const getNotificationById = async (
@@ -443,17 +437,9 @@ export const completeSingleNotification = async (
 ): Promise<DateReturn> => {
 	let notification = await getNotificationById(id, user_id);
 	let { frequency_type, frequency, notification_date } = notification;
-
-	//Set the notification_date as current date if its in the past else use the future notification date
-	if (compareAsc(new Date(), notification_date) >= 0) {
-		notification_date = new Date();
-	}
-
-	let nextNotificationResult = calculateNextNotification(
-		notification_date,
-		frequency,
-		frequency_type,
-	);
+	//calculate the next date from today
+	let currentDate = new Date();
+	let nextNotificationResult = calculateNextNotification(currentDate, frequency, frequency_type);
 	notification.notification_date = nextNotificationResult.date;
 	notification.meta_notifications.done_count = notification.meta_notifications.done_count + 1;
 	const userNotificationsRepository = await getRepository(UserNotifications);

@@ -34,7 +34,7 @@ import FullPageLoader from './components/Loaders/FullPageLoader';
 
 Axios.defaults.baseURL = process.env.REACT_APP_PROXY
   ? process.env.REACT_APP_PROXY
-  : 'https://localhost:3050';
+  : 'http://localhost:3050';
 
 function App() {
   const theme = createTheme({
