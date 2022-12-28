@@ -10,11 +10,13 @@ import {
 	getLinkedReminders,
 	deleteNotificationFromSet,
 	getSetList,
+	deleteRemovedRemindersIfExists,
 } from './../../src/models/ReminderSet';
 import {
 	deleteNotification,
 	getNotificationById,
 	completeNotification,
+	getNotificationsForUser,
 } from './../../src/models/UserNotifications';
 import { differenceInDays } from 'date-fns';
 import { expect } from 'chai';
@@ -22,7 +24,7 @@ import 'mocha';
 
 import { getTime } from 'date-fns';
 import { establishDatabaseConnection } from './../../src/utils/dataBase';
-//npm test test\models\ReminderSetTest.ts -- --grep "gets reminder set data and reminders"
+//npm test test/models/ReminderSetTest.ts -- --grep "delete notification difference from input and set"
 before(async () => {
 	await establishDatabaseConnection();
 });
@@ -51,6 +53,53 @@ describe('save new reminder set', () => {
 			},
 		],
 	};
+	const deleteNotificationsForUser = async (user_id: string) => {
+		const responseData = await getSetList(user_id);
+		responseData.data.map(async (notificationSet) => {
+			const deleted = await deleteNotificationSet(notificationSet.id);
+		});
+		let notificationListToClear = await getNotificationsForUser(user_id);
+		let idsToDelete = await Promise.all(
+			notificationListToClear.results.map(async (record) => {
+				if (record.id) {
+					await deleteNotification(record.id);
+				}
+			}),
+		);
+	};
+	it('delete notification difference from input and set', async () => {
+		let validReminderData = {
+			...reminderData,
+		};
+		await deleteNotificationsForUser(reminderData.user_id);
+		const notificationResult = await saveSetFromRequest(validReminderData);
+		if (typeof notificationResult !== 'boolean') {
+			let singleNotificationParams = {
+				...reminderData.reminders[0],
+				set_id: notificationResult.id,
+				user_id: reminderData.user_id,
+			};
+
+			let index = 0;
+			let firstNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			index = 1;
+			let secondNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			index = 2;
+			let thirdNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			let retrievedNotificationSet = await getSetById(notificationResult.id);
+			let linkedReminders = await getLinkedReminders(notificationResult.id);
+			expect(linkedReminders.length).to.be.equal(3);
+
+			let reminders = [firstNotification, secondNotification, singleNotificationParams];
+			let deletedIds = await deleteRemovedRemindersIfExists(linkedReminders, reminders);
+			expect(deletedIds.length).to.be.equal(1);
+			linkedReminders = await getLinkedReminders(notificationResult.id);
+			expect(linkedReminders.length).to.be.equal(2);
+
+			//start test
+			await deleteNotificationSet(notificationResult.id);
+		}
+	});
 
 	xit('deletes notification from set', async () => {
 		let validReminderData = {

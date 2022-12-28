@@ -23,13 +23,6 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 	}, [reminders]);
 
 	const removeReminder = async (index) => {
-		let chosenReminder = reminders.filter((reminder, key) => {
-			return key === index;
-		});
-		if (chosenReminder.length && chosenReminder[0].id) {
-			return;
-		}
-
 		removeReminderFromState(index);
 	};
 	const toggleComplete = (changedValue, key) => {
@@ -42,7 +35,6 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 			...changedReminders[key].link,
 			complete: changedValue,
 		};
-		console.log(changedReminders);
 		if (changedValue === false) {
 			changedReminders = reminders.map((current, currentKey) => {
 				if (currentKey >= key) {
@@ -59,8 +51,8 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 		setReminders([
 			...reminders,
 			{
-				subject: 'Enter Subject',
-				description: 'Short Description',
+				subject: '',
+				description: '',
 				notification_date: new Date(),
 				days_after: 2,
 				is_active: true,
@@ -72,6 +64,25 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 			return !(key === index);
 		});
 		setReminders(filteredReminders);
+	};
+	const handleMove = (direction, key) => {
+		if (direction === 'Up' && key > 0) {
+			let swappedReminders = reminders;
+			let swap = swappedReminders[key];
+			swappedReminders[key] = swappedReminders[key - 1];
+			swappedReminders[key - 1] = swap;
+			setReminders(swappedReminders);
+			return;
+		}
+		let hasNextReminder = reminders[key + 1];
+		if (direction === 'Down' && hasNextReminder) {
+			let swappedReminders = reminders;
+			let swap = swappedReminders[key + 1];
+			swappedReminders[key + 1] = swappedReminders[key];
+			swappedReminders[key] = swap;
+			setReminders(swappedReminders);
+			return;
+		}
 	};
 	return (
 		<>
@@ -88,6 +99,7 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 										}}
 										isFirst={key === dateKey}
 										handleRemove={(reminder) => removeReminder(key)}
+										handleMove={(direction) => handleMove(direction, key)}
 										key={`${key}-something`}
 										reminderIndex={key}
 										toggleComplete={(changedValue) => toggleComplete(changedValue, key)}
@@ -99,7 +111,7 @@ export default function ReminderSet({ reminders, setReminders, showSave }) {
 				</Grid>
 			)}
 			<Grid item xs={12}>
-				<Button fullWidth variant="text" onClick={addReminderSet}>
+				<Button variant="text" onClick={addReminderSet}>
 					Add New
 				</Button>
 			</Grid>

@@ -74,6 +74,9 @@ export default function CreateSchedule(props) {
 			]);
 			pendingReminderObject.load();
 			navigate(`/create/${results.data.id}`);
+			setTimeout(() => {
+				setMessages([]);
+			}, 1000);
 		}
 	};
 

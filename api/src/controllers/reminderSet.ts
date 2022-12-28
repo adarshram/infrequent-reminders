@@ -14,6 +14,7 @@ import {
 	getLinkedReminders,
 	deleteNotificationFromSet,
 	getSetList,
+	deleteRemovedRemindersIfExists,
 } from '../models/ReminderSet';
 
 export const view = async (req: Request, res: Response) => {
@@ -68,6 +69,13 @@ export const saveSet = async (req: Request, res: Response) => {
 		errorResponse(res, 'Unable to insert');
 		return;
 	}
+	if (formValues.id) {
+		let linkedReminders = await getLinkedReminders(formValues.id);
+		if (linkedReminders.length !== reminders.length) {
+			await deleteRemovedRemindersIfExists(linkedReminders, reminders);
+		}
+	}
+
 	if (typeof notificationResult !== 'boolean') {
 		reminders.map(async (params, index) => {
 			const singleNotificationParams = {
