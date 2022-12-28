@@ -103,8 +103,8 @@ export const saveSingleNotificationForSet = async (
 		notification_date: singleSetData.notification_date,
 		user_id: singleSetData.user_id,
 		is_active: index === 0 ? true : false,
-		frequency_type: 'm',
-		frequency: 12,
+		frequency_type: 'w',
+		frequency: 1,
 	};
 	const notificationResult = await createNotificationsForUser(createParameters);
 	if (typeof notificationResult !== 'boolean') {
@@ -283,4 +283,28 @@ export const getSetCounts = async (ids: number[]): Promise<any> => {
 		flatResults[parseInt(row.set_id)] = parseInt(row.count);
 	});
 	return flatResults;
+};
+
+export const deleteRemovedRemindersIfExists = async (
+	linkedReminders: LinkedUserNotifications[],
+	reminders: Array<any>,
+): Promise<Array<any>> => {
+	//deleteNotificationFromSet
+	let existingIds = reminders.map((current) => {
+		return current.id ? current.id : 0;
+	});
+
+	let missedIds = await Promise.all(
+		linkedReminders.map(async (current) => {
+			if (!existingIds.includes(current.id)) {
+				await deleteNotificationFromSet(current.id);
+				return current.id;
+			}
+			return false;
+		}),
+	);
+	let deletedIds = missedIds.filter((current) => {
+		return current ? true : false;
+	});
+	return deletedIds;
 };

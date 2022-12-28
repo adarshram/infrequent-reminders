@@ -12,6 +12,7 @@ import {
 	ListItemButton,
 	ListItemIcon,
 	ListItemText,
+	IconButton,
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import useReminderSetList from '../../hooks/useReminderSetList';
@@ -77,7 +78,9 @@ export default function ListSet() {
 			<ListItem>
 				<ListItemButton>
 					<ListItemIcon onClick={() => handleEdit(reminder)} data-testid={`edit-${reminder.id}`}>
-						<EditIcon />
+						<IconButton>
+							<EditIcon />
+						</IconButton>
 					</ListItemIcon>
 
 					<ListItemText
@@ -97,7 +100,9 @@ export default function ListSet() {
 					/>
 				</ListItemButton>
 				<ListItemIcon onClick={() => handleDelete(reminder)} data-testid={`delete-${reminder.id}`}>
-					<DeleteIcon />
+					<IconButton>
+						<DeleteIcon />
+					</IconButton>
 				</ListItemIcon>
 			</ListItem>
 		);

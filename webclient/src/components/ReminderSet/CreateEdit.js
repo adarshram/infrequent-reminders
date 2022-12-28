@@ -6,20 +6,15 @@ import TitleDescription from './TitleDescription';
 import useServerCall from '../../hooks/useServerCall';
 import ConfirmDialog from '../ConfirmDialog';
 
-export default function CreateEdit({ reminderData, onSave, successMessage, saveErrors }) {
+export default function CreateEdit({ reminderData, onSave, successMessage, saveErrors, onCancel }) {
 	const [title, setTitle] = useState('Create Reminder Set');
 	const [deleteReminderSet, , ,] = useServerCall(`/user/reminderSet/deleteNotification/`);
 
-	const [formValues, setFormValues] = useState({
-		subject: '',
-		description: '',
-		id: false,
-		reminders: [],
-	});
+	const [formValues, setFormValues] = useState(null);
 	const [confirmDelete, setConfirmDelete] = useState(false);
 	const [currentReminder, setCurrentReminder] = useState(false);
 	const [errors, setErrors] = useState([]);
-	const { reminders } = formValues;
+
 	useEffect(() => {
 		if (reminderData) {
 			setTitle(reminderData?.id ? 'Edit Reminder Set' : 'Create Reminder Set');
@@ -30,6 +25,7 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 				reminders: reminderData.reminders ?? [],
 			});
 		}
+
 		if (saveErrors) {
 			setErrors(saveErrors);
 		}
@@ -118,6 +114,10 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 		}
 		return validate;
 	};
+	if (!formValues) {
+		return '';
+	}
+	const { reminders } = formValues;
 
 	return (
 		<Box
@@ -149,8 +149,11 @@ export default function CreateEdit({ reminderData, onSave, successMessage, saveE
 					<ReminderSet reminders={formValues.reminders} setReminders={setReminders} />
 
 					<Grid item xs={12}>
-						<Button fullWidth variant="text" onClick={onSubmit}>
+						<Button variant="text" onClick={onSubmit}>
 							Save
+						</Button>
+						<Button variant="text" onClick={onCancel}>
+							Cancel
 						</Button>
 					</Grid>
 				</Grid>

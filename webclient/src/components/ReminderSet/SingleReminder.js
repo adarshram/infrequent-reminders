@@ -4,18 +4,18 @@ import {
 	Select,
 	MenuItem,
 	ListItem,
-	ListItemIcon,
 	IconButton,
 	Checkbox,
 	FormGroup,
 	FormControlLabel,
+	Menu,
 } from '@mui/material';
 
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { DatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import DateAdapter from '@mui/lab/AdapterDateFns';
 
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 export default function SingleReminder({
 	reminderData,
 	onChange,
@@ -24,6 +24,7 @@ export default function SingleReminder({
 	toggleComplete,
 	reminderIndex,
 	isCurrentReminder,
+	handleMove,
 }) {
 	const daysOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	const handleDateChange = (key, value) => {
@@ -36,9 +37,16 @@ export default function SingleReminder({
 	const handleSelectChange = (e) => {
 		onChange(e.target.name, e.target.value);
 	};
-	const handleRemoveClick = () => {
-		if (handleRemove) {
+
+	const onLongMenuClick = (option) => {
+		if (option === 'Remove' && handleRemove) {
 			handleRemove(reminderData);
+		}
+		if (option === 'Up' && handleMove) {
+			handleMove(option);
+		}
+		if (option === 'Down' && handleMove) {
+			handleMove(option);
 		}
 	};
 
@@ -104,15 +112,67 @@ export default function SingleReminder({
 					))}
 				</Select>
 			)}
-			<ListItemIcon
-				onClick={(e) => {
-					handleRemoveClick();
+
+			<LongMenu onClick={onLongMenuClick} />
+		</ListItem>
+	);
+}
+
+function LongMenu({ onClick }) {
+	const [anchorEl, setAnchorEl] = React.useState(null);
+	const options = ['Remove', 'Up', 'Down'];
+
+	const ITEM_HEIGHT = 48;
+	const open = Boolean(anchorEl);
+	const handleClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+	const handleClose = (option) => {
+		if (onClick) {
+			onClick(option);
+		}
+		setAnchorEl(null);
+	};
+
+	return (
+		<div>
+			<IconButton
+				aria-label="more"
+				id="long-button"
+				aria-controls={open ? 'long-menu' : undefined}
+				aria-expanded={open ? 'true' : undefined}
+				aria-haspopup="true"
+				onClick={handleClick}
+			>
+				<MoreVertIcon />
+			</IconButton>
+			<Menu
+				id="long-menu"
+				MenuListProps={{
+					'aria-labelledby': 'long-button',
+				}}
+				anchorEl={anchorEl}
+				open={open}
+				onClose={handleClose}
+				PaperProps={{
+					style: {
+						maxHeight: ITEM_HEIGHT * 4.5,
+						width: '20ch',
+					},
 				}}
 			>
-				<IconButton>
-					<RemoveCircleIcon alt="snooze" />
-				</IconButton>
-			</ListItemIcon>
-		</ListItem>
+				{options.map((option) => (
+					<MenuItem
+						key={option}
+						selected={option === 'Pyxis'}
+						onClick={() => {
+							handleClose(option);
+						}}
+					>
+						{option}
+					</MenuItem>
+				))}
+			</Menu>
+		</div>
 	);
 }

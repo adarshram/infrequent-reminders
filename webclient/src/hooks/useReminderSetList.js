@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 //import { reminderSetListFilled } from '../models/mocks/reminderSet';
 import useServerCall from './useServerCall';
 const useReminderSetList = (parameters) => {
-  const [data, setData] = useState(false);
+  const [data, setData] = useState(null);
   const [errors, setErrors] = useState([]);
   const [loading] = useState(false);
   const [listCall, , , ,] = useServerCall('/user/reminderSet/list');
