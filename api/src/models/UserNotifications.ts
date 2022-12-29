@@ -22,6 +22,7 @@ import {
 import { calculateSnoozeDate, calculateNextNotification } from '../utils/dateManipulators';
 
 import { UserNotifications } from '../entity/UserNotifications';
+import { getLinkedReminders } from '../models/ReminderSet';
 import { NotificationSetLink } from '../entity/NotificationSetLink';
 import { MetaNotifications } from '../entity/MetaNotifications';
 
@@ -493,12 +494,22 @@ export const completeLinkedSetIfPresent = async (id: number): Promise<DateReturn
 	if (!isAllowed) {
 		return undefined;
 	}
-	const userNotificationsRepository = await getRepository(UserNotifications);
-	let mainNotification = await userNotificationsRepository.findOne({
-		relations: ['meta_notifications'],
-		where: { id: id },
+	let linkedNotificationData = await getLinkedNotificationByNotificationId(id);
+
+	let linkedReminderArray = await getLinkedReminders(linkedNotificationData.set_id);
+
+	let mainNotificationIndex = linkedReminderArray.findIndex((current) => {
+		return current.id == id;
 	});
 
+	if (mainNotificationIndex === -1) {
+		//unable to find the index
+		return undefined;
+	}
+	let mainNotification = linkedReminderArray[mainNotificationIndex];
+	let nextNotification = linkedReminderArray[mainNotificationIndex + 1] ?? undefined;
+	console.log(linkedReminderArray);
+	const userNotificationsRepository = await getRepository(UserNotifications);
 	if (mainNotification) {
 		mainNotification.is_active = false;
 		mainNotification.updated_at = new Date();
@@ -515,26 +526,20 @@ export const completeLinkedSetIfPresent = async (id: number): Promise<DateReturn
 		const notificationSetLinkRepository = await getRepository(NotificationSetLink);
 		await notificationSetLinkRepository.save(linkedNotification);
 	}
-	let nextNotificationInSet = await getNextNotificationFromSet(id);
-	if (!nextNotificationInSet) {
+
+	if (!nextNotification) {
 		return {
 			date: new Date(),
 			days: 0,
 		};
 	}
-	let nextNotification = await getById(
-		UserNotifications,
-		nextNotificationInSet.user_notification_id,
-	);
-	if (!nextNotification || !(nextNotification instanceof UserNotifications)) {
-		return undefined;
-	}
-	nextNotification.notification_date = nextNotificationInSet.nextDate;
+	let today = new Date();
+	nextNotification.notification_date = addDays(today, nextNotification.link.days_after);
 	nextNotification.is_active = true;
 	nextNotification.updated_at = new Date();
 
 	await userNotificationsRepository.save(nextNotification);
-	let days = differenceInDays(nextNotification.notification_date, new Date());
+	let days = nextNotification.link.days_after;
 	return {
 		date: nextNotification.notification_date,
 		days: days,
