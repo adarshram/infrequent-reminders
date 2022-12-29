@@ -24,7 +24,7 @@ import 'mocha';
 
 import { getTime } from 'date-fns';
 import { establishDatabaseConnection } from './../../src/utils/dataBase';
-//npm test test/models/ReminderSetTest.ts -- --grep "delete notification difference from input and set"
+//npm test test/models/ReminderSetTest.ts -- --grep "creates,completes and uncompletes reminder set"
 before(async () => {
 	await establishDatabaseConnection();
 });
@@ -95,6 +95,49 @@ describe('save new reminder set', () => {
 			expect(deletedIds.length).to.be.equal(1);
 			linkedReminders = await getLinkedReminders(notificationResult.id);
 			expect(linkedReminders.length).to.be.equal(2);
+
+			//start test
+			await deleteNotificationSet(notificationResult.id);
+		}
+	});
+	it('complete notification', async () => {
+		let validReminderData = {
+			...reminderData,
+		};
+		await deleteNotificationsForUser(reminderData.user_id);
+		const notificationResult = await saveSetFromRequest(validReminderData);
+		if (typeof notificationResult !== 'boolean') {
+			let singleNotificationParams = {
+				...reminderData.reminders[0],
+				set_id: notificationResult.id,
+				user_id: reminderData.user_id,
+			};
+
+			let index = 0;
+			let firstNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			index = 1;
+			let secondNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			index = 2;
+			let thirdNotification = await saveSingleNotificationForSet(singleNotificationParams, index);
+			let retrievedNotificationSet = await getSetById(notificationResult.id);
+			let linkedReminders = await getLinkedReminders(notificationResult.id);
+			expect(linkedReminders.length).to.be.equal(3);
+
+			await completeNotification(firstNotification.id, firstNotification.user_id);
+			linkedReminders = await getLinkedReminders(notificationResult.id);
+			expect(linkedReminders[0].is_active).to.be.equal(false);
+			expect(linkedReminders[1].is_active).to.be.equal(true);
+
+			await completeNotification(secondNotification.id, secondNotification.user_id);
+			linkedReminders = await getLinkedReminders(notificationResult.id);
+			expect(linkedReminders[1].is_active).to.be.equal(false);
+			expect(linkedReminders[2].is_active).to.be.equal(true);
+
+			await completeNotification(thirdNotification.id, thirdNotification.user_id);
+			linkedReminders = await getLinkedReminders(notificationResult.id);
+			expect(linkedReminders[0].is_active).to.be.equal(false);
+			expect(linkedReminders[1].is_active).to.be.equal(false);
+			expect(linkedReminders[2].is_active).to.be.equal(false);
 
 			//start test
 			await deleteNotificationSet(notificationResult.id);
@@ -272,7 +315,7 @@ describe('save new reminder set', () => {
 			const deleted = await deleteNotificationSet(notificationSet.id);
 		});
 	});
-	xit('creates,completes and uncompletes reminder set', async () => {
+	it('creates,completes and uncompletes reminder set', async () => {
 		const responseData = await getSetList('123');
 		responseData.data.map(async (notificationSet) => {
 			const deleted = await deleteNotificationSet(notificationSet.id);
@@ -282,6 +325,7 @@ describe('save new reminder set', () => {
 			...reminderData,
 		};
 		const notificationResult = await saveSetFromRequest(validReminderData);
+
 		if (typeof notificationResult !== 'boolean') {
 			let singleNotificationParams = {
 				...reminderData.reminders[0],
