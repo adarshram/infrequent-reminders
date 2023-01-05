@@ -79,17 +79,10 @@ export const useNotificationDeviceList = () => {
 };
 export const useEditNotificationForUser = () => {
 	//use server call here
-	const [saveCall, , ,] = useServerCall('/user/notificationDevices/saveDevice');
-	const [currentDeviceToken, browserData] = useFetchBrowserData();
+	const [saveCall, , ,] = useServerCall('/user/notificationDevices/saveDevices');
 
-	const enableDisable = async (deviceId, switchStatus, deviceName) => {
-		let isCurrentDevice = currentDeviceToken === deviceId;
-		deviceName = isCurrentDevice ? browserData.name : deviceName;
-		let res = saveCall.postAsync({
-			deviceId: deviceId,
-			switchStatus: switchStatus,
-			deviceName: deviceName,
-		});
+	const enableDisable = async (updatedDevices) => {
+		let res = await saveCall.postAsync({ deviceList: updatedDevices });
 		return res;
 	};
 	return [enableDisable];

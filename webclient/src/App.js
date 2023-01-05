@@ -11,6 +11,8 @@ import ListSchedules from './pages/ListSchedules';
 import Dashboard from './pages/Dashboard';
 
 import UserProfile from './pages/UserProfile';
+import NotificationManager from './pages/NotificationManager';
+
 import PendingNotifications from './pages/PendingNotifications';
 import UpcomingNotifications from './pages/UpcomingNotifications';
 
@@ -97,6 +99,7 @@ function App() {
                 </Route>
 
                 <Route path="/userProfile" element={<UserProfile />} />
+                <Route path="/notificationManager" element={<NotificationManager />} />
               </Routes>
             </Container>
             <Footer />

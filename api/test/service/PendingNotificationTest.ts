@@ -28,14 +28,16 @@ import {
 } from './../../src/models/NotificationLog';
 import { differenceInCalendarDays, addDays, getTime, format } from 'date-fns';
 import { expect } from 'chai';
-import { stub } from 'sinon';
+import { stub, assert, spy } from 'sinon';
 
 import 'mocha';
 import { createConnection } from 'typeorm';
 import { establishDatabaseConnection } from './../../src/utils/dataBase';
 import { PendingNotification } from './../../src/service/PendingNotification';
+import * as userVapidKeys from './../../src/models/UserVapidKeys';
+import * as notificationUtils from './../../src/utils/notification';
 
-//npm test test\service\PendingNotificationTest.ts -- --grep "sends notification for specific user yMwuesozlicC6FSSGCaYmhK1Y6r1"
+//npm test test/service/PendingNotificationTest.ts -- --grep "process pending notification per user"
 
 before(async () => {});
 
@@ -52,17 +54,62 @@ describe('notification data handler', () => {
 		await establishDatabaseConnection();
 		await initializeFireBase();
 		let pendingNotification = new PendingNotification();
-		stub(pendingNotification, 'getUsersWithNotification').resolves([
-			'83zkNxe3BtSpXsFgxrDgw49ktWj2',
+
+		let vapidKeyStub = stub(notificationUtils, 'sendNotificationMessageToVapidKey').resolves({
+			success: true,
+			errors: [],
+		});
+		let emailStub = stub(notificationUtils, 'sendNotificationEmail').resolves({
+			success: true,
+			errors: [],
+		});
+
+		stub(userVapidKeys, 'getKeysForUser').resolves([
+			{
+				id: 'adadasdasd',
+				devices: [
+					{
+						email: '1adarshr1am@gmail.com',
+						isEmail: true,
+						enabled: true,
+						name: 'UserEmail',
+					},
+					{
+						name: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+						enabled: true,
+						vapidKey:
+							'ekcV9eoppsrD4xxaXho4_Z:APA91bFdIPPPMQzFkGzmdHDqSZMKUBWiV7ek7PJoT0WGpesy1u_5B9Y2ekclOTdmDhgTbUNUoG7tS477O-5Im-YqLvgRQpWgvCXew8gP74yNY4KRVQMvFz0l-0rrIIfhgirbtJ8seQDv',
+					},
+				],
+				fireBaseRefId: '83zkNxe3BtSpXsFgxrDgw49ktWj2',
+				created_at: 4,
+			},
 		]);
 
-		let users = await pendingNotification.getUsersWithNotification();
+		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
+		let previousDate = addDays(new Date(), -5);
+		let notificationParameters = {
+			user_id: validUserId,
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: previousDate,
+			is_active: true,
+		};
+
+		let notification = await createNotificationsForUser(notificationParameters);
+
+		let users = ['83zkNxe3BtSpXsFgxrDgw49ktWj2'];
 		await Promise.all(
 			users.map(async (user_id) => {
 				let userPendingNotifications = await pendingNotification.getPendingNotifications(user_id);
-				pendingNotification.send(userPendingNotifications, user_id);
+				await pendingNotification.send(userPendingNotifications, user_id);
 			}),
 		);
+		await deleteNotification(notification.id);
+		assert.calledOnce(emailStub);
+		assert.calledOnce(vapidKeyStub);
 	});
 
 	it('sends notification for specific user yMwuesozlicC6FSSGCaYmhK1Y6r1', async () => {
@@ -78,7 +125,7 @@ describe('notification data handler', () => {
 			users.map(async (user_id) => {
 				let userPendingNotifications = await pendingNotification.getPendingNotifications(user_id);
 				if (userPendingNotifications && userPendingNotifications.length) {
-					pendingNotification.send(userPendingNotifications, user_id);
+					await pendingNotification.send(userPendingNotifications, user_id);
 				}
 			}),
 		);
@@ -108,7 +155,7 @@ describe('notification data handler', () => {
 		await Promise.all(
 			users.map(async (user_id) => {
 				let userPendingNotifications = await pendingNotification.getPendingNotifications(user_id);
-				pendingNotification.send(userPendingNotifications, user_id);
+				await pendingNotification.send(userPendingNotifications, user_id);
 			}),
 		);
 		let [expectedNotificationLog, expectedCount] = await getNotificationLogForUser(
@@ -116,7 +163,7 @@ describe('notification data handler', () => {
 		);
 		expect(expectedCount).to.equal(1);
 		let dateString = format(new Date(), 'yyyy-MM-dd');
-		let notificationLog = await getNotificationsByDate(dateString);
+		let notificationLog = await getNotificationsByDate(new Date(dateString));
 		await Promise.all(
 			notificationLog.map(async (current) => {
 				deleteNotificationLog(current);

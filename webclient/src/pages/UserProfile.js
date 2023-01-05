@@ -1,24 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import {
-	Button,
-	TextField,
-	Box,
-	Grid,
-	Typography,
-	Paper,
-	Alert,
-	FormControlLabel,
-	Switch,
-} from '@mui/material';
+import { Button, TextField, Box, Grid, Typography, Paper, Alert, Hidden } from '@mui/material';
 
 import { UserContext } from '../models/UserContext';
 import useServerCall from '../hooks/useServerCall';
 import useFbaseAuthUser from '../hooks/useFbaseAuthUser';
+import ProfileSideBar from '../components/ProfileSideBar';
 
-import {
-	useNotificationDeviceList,
-	useEditNotificationForUser,
-} from '../hooks/notificationDevices';
 const defaultFormValues = {
 	first_name: '',
 	last_name: '',
@@ -31,15 +18,6 @@ export default function UserProfile() {
 	const profileData = signedInUser.profile;
 
 	const [saveProfile, , ,] = useServerCall('/user/profile/save');
-	const [
-		deviceList,
-		currentDevice,
-		hasNotificationEnabled,
-		notificationErrors,
-		refreshNotificationList,
-	] = useNotificationDeviceList();
-
-	const [editNotificationCall] = useEditNotificationForUser();
 
 	const [formValues, setFormValues] = useState(profileData ? profileData : defaultFormValues);
 
@@ -117,14 +95,7 @@ export default function UserProfile() {
 			[e.target.name]: e.target.value,
 		});
 	};
-	const enableDisableNotification = async (notification) => {
-		await editNotificationCall(
-			notification.vapidKey,
-			!notification.enabled,
-			notification.name ?? 'Unknown',
-		);
-		refreshNotificationList();
-	};
+
 	const logUserOut = async () => {
 		await logOut();
 		signedInUser.fetchProfile(true);
@@ -135,118 +106,94 @@ export default function UserProfile() {
 		return 'User Logged Out';
 	}
 	return (
-		<Box
-			sx={{
-				display: 'flex',
-				justifyContent: 'center',
-			}}
-		>
-			<Paper
-				elevation={3}
-				sx={{
-					mt: 3,
-					padding: 3,
-					width: 400,
-				}}
-			>
-				<Typography component="h1" variant="h5">
-					Create/Edit User
-				</Typography>
+		<Grid container spacing={2}>
+			<Grid item xs={12} lg={3} md={3}>
+				<Hidden mdDown>
+					<ProfileSideBar />
+				</Hidden>
+			</Grid>
+			<Grid item xs={9} md={4}>
+				<Box
+					sx={{
+						justifyContent: 'center',
+					}}
+				>
+					<Paper
+						elevation={3}
+						sx={{
+							mt: 3,
+							padding: 3,
+						}}
+					>
+						<Typography component="h1" variant="h5">
+							Create/Edit User
+						</Typography>
 
-				<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
-					{errors.map((err, key) => {
-						return (
-							<Alert key={key} severity="error">
-								{err}
-							</Alert>
-						);
-					})}
-					{notificationErrors.map((err, key) => {
-						return (
-							<Alert key={key} severity="error">
-								{err}
-							</Alert>
-						);
-					})}
-
-					{messages.map((message, key) => {
-						return (
-							<Alert key={key} severity="info">
-								{message}
-							</Alert>
-						);
-					})}
-					{!hasNotificationEnabled && <Alert severity="info">Notifications Not Enabled</Alert>}
-
-					<Grid container spacing={2}>
-						<Grid item xs={12}>
-							<TextField
-								required
-								fullWidth
-								id="first_name"
-								label="User First Name"
-								name="first_name"
-								value={first_name}
-								onChange={handleChange}
-								autoFocus
-							/>
-						</Grid>
-						<Grid item xs={12}>
-							<TextField
-								required
-								fullWidth
-								id="last_name"
-								label="User Last Name"
-								name="last_name"
-								value={last_name}
-								onChange={handleChange}
-							/>
-						</Grid>
-						<Grid item xs={12}>
-							<TextField
-								fullWidth
-								id="email"
-								label="User Name"
-								name="email"
-								value={email}
-								onChange={handleChange}
-								required
-							/>
-						</Grid>
-
-						{deviceList &&
-							deviceList.length > 0 &&
-							deviceList.map((notification, key) => {
+						<Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+							{errors.map((err, key) => {
 								return (
-									<Grid item xs={12} key={key}>
-										<FormControlLabel
-											control={
-												<Switch
-													checked={notification.enabled ? true : false}
-													name="notificationPreference"
-													onChange={() => {
-														enableDisableNotification(notification);
-													}}
-												/>
-											}
-											label={`Notifications for ${notification.name} ${
-												notification.vapidKey === currentDevice ? '(current*)' : ''
-											}`}
-										/>
-									</Grid>
+									<Alert key={key} severity="error">
+										{err}
+									</Alert>
 								);
 							})}
-					</Grid>
-					<Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-						Save
-					</Button>
-					{logOut && (
-						<Button fullWidth variant="text" sx={{ mt: 3, mb: 2 }} onClick={logUserOut}>
-							Logout
-						</Button>
-					)}
+
+							{messages.map((message, key) => {
+								return (
+									<Alert key={key} severity="info">
+										{message}
+									</Alert>
+								);
+							})}
+
+							<Grid container spacing={2}>
+								<Grid item xs={12}>
+									<TextField
+										required
+										fullWidth
+										id="first_name"
+										label="User First Name"
+										name="first_name"
+										value={first_name}
+										onChange={handleChange}
+										autoFocus
+									/>
+								</Grid>
+								<Grid item xs={12}>
+									<TextField
+										required
+										fullWidth
+										id="last_name"
+										label="User Last Name"
+										name="last_name"
+										value={last_name}
+										onChange={handleChange}
+									/>
+								</Grid>
+								<Grid item xs={12}>
+									<TextField
+										fullWidth
+										id="email"
+										label="User Name"
+										name="email"
+										value={email}
+										onChange={handleChange}
+										required
+									/>
+								</Grid>
+							</Grid>
+							<Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
+								Save
+							</Button>
+							{logOut && (
+								<Button fullWidth variant="text" sx={{ mt: 3, mb: 2 }} onClick={logUserOut}>
+									Logout
+								</Button>
+							)}
+						</Box>
+					</Paper>
 				</Box>
-			</Paper>
-		</Box>
+			</Grid>
+		</Grid>
 	);
 }

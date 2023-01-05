@@ -160,6 +160,24 @@ export const saveDevicePreference = async (
 		return true;
 	}
 };
+export const saveDeviceList = async (fireBaseRefId: string, deviceList: Array<any>) => {
+	const userKeys = await getKeysForUser(fireBaseRefId);
+	let createParams = {
+		created_at: new Date().getDate(),
+		fireBaseRefId: fireBaseRefId,
+		devices: deviceList,
+	};
+	if (userKeys) {
+		createParams = {
+			...createParams,
+			created_at: userKeys[0].created_at,
+		};
+	}
+	let existingId = userKeys ? userKeys[0].id : false;
+	let res = await addToCollection('UserVapidKeys', createParams, existingId);
+
+	return true;
+};
 
 const getVapidKeyObject = () => {
 	const db = getFireStoreDbObject();

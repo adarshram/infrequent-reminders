@@ -26,32 +26,44 @@ export class PendingNotification {
 		let userResults = await getUsersWithPendingNotifications();
 		return userResults;
 	};
+
 	getPendingNotifications = async (user_id: string) => {
 		return getPendingNotifications(user_id);
 	};
+
 	send = async (notifications: UserNotifications[], user_id: string): Promise<boolean> => {
 		let userKeys = await userVapidKeys.getKeysForUser(user_id);
+
 		let sentNotification = false;
-		if (userKeys) {
-			let vapidKeyData = userKeys[0];
-			sentNotification = await this.handleVapidKeyNotificationForUser(
+		if (userKeys && notifications.length > 0) {
+			let notificationDevices = userKeys[0].devices.filter(
+				(currentDevice) => !currentDevice.isEmail,
+			);
+			let emailDevices = userKeys[0].devices.filter(
+				(currentDevice) => currentDevice.isEmail === true,
+			);
+
+			let deviceNotification = await this.handleVapidKeyNotificationForUser(
 				notifications,
 				user_id,
-				vapidKeyData,
+				notificationDevices,
 			);
 			await this.updateLogWithSendType(
 				notifications,
-				sentNotification ? 'Device Notification' : 'Device Notification Failed',
+				deviceNotification ? 'Device Notification' : 'Device Notification Failed',
 			);
+			let emailNotification = await this.sendEmailNotifications(
+				notifications,
+				user_id,
+				emailDevices,
+			);
+			await this.updateLogWithSendType(
+				notifications,
+				emailNotification ? 'Email Notification' : 'Email Notification Failed',
+			);
+			sentNotification = deviceNotification || emailNotification;
 		}
 
-		if (!sentNotification) {
-			sentNotification = await this.handleEmailNotificationForUser(notifications, user_id);
-			await this.updateLogWithSendType(
-				notifications,
-				sentNotification ? 'Email Notification' : 'Email Notification Failed',
-			);
-		}
 		if (sentNotification) {
 			let snoozedResults = await Promise.all(
 				notifications.map(async (singleNotification) => {
@@ -78,7 +90,7 @@ export class PendingNotification {
 	handleVapidKeyNotificationForUser = async (
 		pending: UserNotifications[],
 		user_id: string,
-		vapidKeyData,
+		notificationDevices: Array<any>,
 	): Promise<boolean> => {
 		if (pending.length === 0) {
 			return true;
@@ -87,8 +99,9 @@ export class PendingNotification {
 		if (pending.length == 1) {
 			notificationSubject = `Your Reminder ${pending[0].subject} is overdue`;
 		}
+
 		let successFulKeys = await Promise.all(
-			vapidKeyData.devices
+			notificationDevices
 				.map(async (device) => {
 					if (device.enabled) {
 						let { success, errors } = await sendNotificationMessageToVapidKey(
@@ -114,19 +127,45 @@ export class PendingNotification {
 
 		return false;
 	};
+	sendEmailNotifications = async (
+		pending: UserNotifications[],
+		user_id: string,
+		emailDevices: Array<any>,
+	) => {
+		let emailSucessfulKeys = await Promise.all(
+			emailDevices
+				.map(async (device) => {
+					if (device.enabled && device.email) {
+						let success = await this.handleEmailNotificationForUser(pending, user_id, device.email);
 
+						if (success) {
+							return true;
+						}
+					}
+					return false;
+				})
+				.filter((v) => v),
+		);
+		if (emailSucessfulKeys.length > 0) {
+			return true;
+		}
+
+		return false;
+	};
 	handleEmailNotificationForUser = async (
 		pending: UserNotifications[],
 		user_id: string,
+		emailAddress?: string,
 	): Promise<boolean> => {
-		let sendEmail = '';
-		let userProfile = await getUserProfileWithId(user_id);
-		if (!userProfile) {
-			return false;
+		let sendEmail = emailAddress;
+		if (!emailAddress) {
+			let userProfile = await getUserProfileWithId(user_id);
+			if (!userProfile) {
+				return false;
+			}
+			sendEmail =
+				userProfile && userProfile.email && userProfile.email != '' ? userProfile.email : '';
 		}
-		sendEmail =
-			userProfile && userProfile.email && userProfile.email != '' ? userProfile.email : '';
-
 		if (sendEmail === '') {
 			return false;
 		}
@@ -144,6 +183,7 @@ export class PendingNotification {
 		);
 		return success;
 	};
+
 	getUpcomingUrl = async (): Promise<string> => {
 		const baseUrlData = await getCredentialsByKey('base_url');
 		const baseUrl = baseUrlData ? baseUrlData.settings_value : 'http://localhost:3006/';

@@ -60,21 +60,16 @@ export const notificationList = async (req: Request, res: Response) => {
   return;
 };
 
-export const saveNotificationDevice = async (req: Request, res: Response) => {
+export const saveNotificationDevices = async (req: Request, res: Response) => {
   const fBaseUser = res.locals.user;
-  const { deviceId, switchStatus, deviceName } = req.body;
-  if (deviceId == '') {
-    errorResponse(res, ['No Vapid Key']);
+  const { deviceList } = req.body;
+  if (!deviceList || !deviceList.length) {
+    errorResponse(res, ['No Devices']);
     return;
   }
   const fireBaseRefId = fBaseUser.uid;
 
-  const saveResponse = await userVapidKeys.saveDevicePreference(
-    fireBaseRefId,
-    deviceId,
-    deviceName,
-    switchStatus,
-  );
+  const saveResponse = await userVapidKeys.saveDeviceList(fireBaseRefId, deviceList);
 
   if (saveResponse) {
     successResponse(res, saveResponse);
