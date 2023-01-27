@@ -5,7 +5,6 @@ npx react-native run-android <-- rebuids the app with native dependencies .
 npx eas-cli build --profile development --platform android <--Android build
 
 cd android && ./gradlew signingReport
-Signature algorithm name: SHA1withRSA (weak)
 
 Generate a new android debug key under android/app folder. Go to the root folder of your react native app and run the below command.
 keytool -list -v -keystore ./android/app/debug.keystore -alias androiddebugkey -storepass android -keypass android

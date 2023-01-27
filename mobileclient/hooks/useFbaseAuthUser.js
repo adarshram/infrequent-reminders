@@ -14,8 +14,11 @@ const useFbaseAuthUser = () => {
       androidClientId:
         "9005250937-7ni9k3og63ce5hukrmrd65h47f71qdu4.apps.googleusercontent.com",
     });
-    const onAuthStateChanged = (user) => {
-      setUser(user);
+    const onAuthStateChanged = async (authUser) => {
+      const idTokenResult = await auth().currentUser.getIdTokenResult();
+      let userWithToken = await auth().currentUser;
+      userWithToken.accessToken = idTokenResult.token;
+      setUser(userWithToken);
     };
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
     return subscriber; // unsubscribe on unmount
