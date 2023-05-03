@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react-native";
 import { format, add } from "date-fns";
 
 import { CreateEditSingle } from "../../../components/Reminder/CreateEditSingle";
-//npm test __tests__/components/Reminder/CreateEditSingle.test.tsx -- --t "custom"
+//npm test __tests__/components/Reminder/CreateEditSingle.test.tsx -- --t "renders prefill"
 
 /**
  * {
@@ -30,11 +30,63 @@ import { CreateEditSingle } from "../../../components/Reminder/CreateEditSingle"
 jest.mock("react-native-paper-dropdown", () => {
   return "";
 });
+
+test("renders prefill", async () => {
+  const saveFn = jest.fn();
+  let reminderData = {
+    user_id: "83zkNxe3BtSpXsFgxrDgw49ktWj2",
+    subject: "sdsdvds",
+    description: "sdfsd",
+    frequency_type: "m",
+    frequency: 1,
+    notification_date: "02/03/2023",
+    meta_notifications: {
+      user_id: "83zkNxe3BtSpXsFgxrDgw49ktWj2",
+      cron_snoozed: 0,
+      user_snoozed: 0,
+      done_count: 0,
+      updated_at: "2023-01-27T11:40:29.539Z",
+      id: 321,
+    },
+    is_active: true,
+    created_at: "2023-01-27T11:40:29.539Z",
+    updated_at: "2023-01-27T11:40:29.539Z",
+    id: "66",
+  };
+  await render(
+    <CreateEditSingle
+      onSave={saveFn}
+      prefilledReminderData={reminderData ? reminderData : {}}
+    />
+  );
+
+  expect(screen.getByTestId("monthly").props.accessibilityState.checked).toBe(
+    true
+  );
+  let calculatedNotificationDate = format(
+    new Date(reminderData.notification_date),
+    "MM/dd/yyyy"
+  );
+  expect(screen.getByTestId("firstReminder").props.value).toBe(
+    calculatedNotificationDate
+  );
+  fireEvent.press(screen.getByTestId("submit_form"));
+  expect(saveFn).toHaveBeenCalledWith(
+    expect.objectContaining({ id: reminderData.id })
+  );
+});
 test("renders correctly", async () => {
   const saveFn = jest.fn();
   await render(<CreateEditSingle onSave={saveFn} />);
-  fireEvent.changeText(screen.getByTestId("title"), "Hello");
+  fireEvent.changeText(screen.getByTestId("subject"), "Hello");
   fireEvent.changeText(screen.getByTestId("description"), "Desc");
+  //weekly should have been pressed by default
+  expect(screen.getByTestId("weekly").props.accessibilityState.checked).toBe(
+    true
+  );
+  expect(screen.getByTestId("monthly").props.accessibilityState.checked).toBe(
+    false
+  );
   fireEvent.press(screen.getByTestId("weekly"));
 
   fireEvent.press(screen.getByTestId("submit_form"));
@@ -44,7 +96,7 @@ test("renders custom date correctly", async () => {
   const saveFn = jest.fn();
   await render(<CreateEditSingle onSave={saveFn} />);
 
-  fireEvent.changeText(screen.getByTestId("title"), "Hello");
+  fireEvent.changeText(screen.getByTestId("subject"), "Hello");
   fireEvent.changeText(screen.getByTestId("description"), "Desc");
   expect(screen.queryByTestId("reminder_frequency")).toBe(null);
   fireEvent.press(screen.getByTestId("custom"));

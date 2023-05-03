@@ -15,28 +15,156 @@ export interface Reminderdata {
 	frequency_type: string;
 }
 import { TextInput, Button, Snackbar, HelperText } from "react-native-paper";
-import { SegmentedButtons, Surface } from "react-native-paper";
+import { SegmentedButtons, Surface, Modal, Portal } from "react-native-paper";
 import DropDown from "react-native-paper-dropdown";
 import { format, add } from "date-fns";
-import { DatePickerInput } from "react-native-paper-dates";
 import "intl";
 import "intl/locale-data/jsonp/en";
+import { Calendar, CalendarList, Agenda } from "react-native-calendars";
 
-export const CreateEditSingle = ({ onSave }) => {
+const CalendarModal = ({ onClose, onSelect }) => {
+	const [modalVisible, setModalVisible] = useState(true);
+	let today = new Date();
+	const firstCalendarDate = add(today, { month: -2 });
+	const lastCalendarDate = add(today, { years: 2 });
+	const [currentMonth, setCurrentMonth] = useState(today);
+
+	const subtractMonth = () => {};
+	const tomorrow = add(today, { days: 1 });
+
+	const addMonth = () => {};
+	const MonthHeader = ({ month }) => {
+		const monthText = format(month, "MMMM - yyyy");
+		return <Text>{monthText}</Text>;
+	};
+	const onDayPress = (day) => {
+		const calculatedNotificationDate = format(
+			new Date(day.timestamp),
+			"MM/dd/yyyy"
+		);
+		onSelect ? onSelect(calculatedNotificationDate) : "";
+		onClose();
+	};
+	return (
+		<Portal>
+			<Modal
+				props={{ transparent: false, animationType: "slide" }}
+				animationType="slide"
+				transparent={false}
+				visible={modalVisible}
+				onDismiss={() => {
+					onClose();
+				}}
+			>
+				<View>
+					<Calendar
+						// Initially visible month. Default = now
+						// Minimum date that can be selected, dates before minDate will be grayed out. Default = undefined
+						//minDate={format(firstCalendarDate, "yyyy-MM-dd")}
+						// Maximum date that can be selected, dates after maxDate will be grayed out. Default = undefined
+						maxDate={format(lastCalendarDate, "yyyy-MM-dd")}
+						// Handler which gets executed on day press. Default = undefined
+						onDayPress={(day) => {
+							onDayPress(day);
+						}}
+						// Handler which gets executed on day long press. Default = undefined
+						onDayLongPress={(day) => {
+							console.log("selected daylong press", day);
+						}}
+						// Month format in calendar title. Formatting values: http://arshaw.com/xdate/#Formatting
+						monthFormat={"yyyy MM"}
+						// Handler which gets executed when visible month changes in calendar. Default = undefined
+						onMonthChange={(month) => {
+							setCurrentMonth(new Date(month.timestamp));
+						}}
+						// Hide month navigation arrows. Default = false
+						// Replace default arrows with custom ones (direction can be 'left' or 'right')
+						// Do not show days of other months in month page. Default = false
+						hideExtraDays={false}
+						// If hideArrows = false and hideExtraDays = false do not switch month when tapping on greyed out
+						// day from another month that is visible in calendar page. Default = false
+						disableMonthChange={false}
+						// If firstDay=1 week starts from Monday. Note that dayNames and dayNamesShort should still start from Sunday
+						firstDay={1}
+						// Handler which gets executed when press arrow icon left. It receive a callback can go back month
+						onPressArrowLeft={(subtractMonth) => subtractMonth()}
+						// Handler which gets executed when press arrow icon right. It receive a callback can go next month
+						onPressArrowRight={(addMonth) => addMonth()}
+						// Disable all touch events for disabled days. can be override with disableTouchEvent in markedDates
+						disableAllTouchEventsForDisabledDays={false}
+						// Replace default month and year title with custom one. the function receive a date as parameter
+						renderHeader={() => {
+							return <MonthHeader month={currentMonth} />;
+						}}
+						// Enable the option to swipe between months. Default = false
+						enableSwipeMonths={true}
+					/>
+				</View>
+			</Modal>
+		</Portal>
+	);
+};
+
+export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 	const [formData, setFormData] = useState({});
 	const [reminderData, setReminderData] = useState({});
+
 	const [errors, setErrors] = useState([]);
 	const [reminderDate, setReminderDate] = useState("");
 	const [nextReminderDate, setNextReminderDate] = useState("");
+	const [calendarModal, setCalendarModal] = useState(false);
+	const [userSetDate, setUserSetDate] = useState<boolean>(false);
 	const onChange = (key, value) => {
 		setFormData({
 			...formData,
 			[key]: value,
 		});
 	};
-	const handleSubmit = () => {
+	const hasPrefilledData =
+		prefilledReminderData && prefilledReminderData.id ? true : false;
+	useEffect(() => {
+		if (prefilledReminderData) {
+			setReminderData({
+				frequency: prefilledReminderData.frequency,
+				frequency_type: prefilledReminderData.frequency_type,
+				notification_date: prefilledReminderData.notification_date,
+			});
+			setReminderDate(prefilledReminderData.notification_date);
+			setFormData({
+				subject: prefilledReminderData.subject,
+				description: prefilledReminderData.description,
+			});
+		}
+	}, [prefilledReminderData]);
+
+	useEffect(() => {
+		let notificationDateObject = new Date(reminderDate);
+		let isValidDate = isNaN(notificationDateObject) ? false : true;
+	}, [reminderDate]);
+
+	const validateSubmit = () => {
+		let validate = true;
+		let errorMessages = [];
+		if (!formData.subject || formData.subject === "") {
+			validate = false;
+			errorMessages.push("Subject Is required");
+		}
+		if (!formData.description || formData.description === "") {
+			validate = false;
+			errorMessages.push("Description Is required");
+		}
 		if (!reminderData.frequency_type) {
-			console.log("invalid");
+			validate = false;
+			errorMessages.push("Frequency Is required");
+		}
+
+		setErrors(errorMessages);
+		return validate;
+	};
+	const handleSubmit = () => {
+		if (!validateSubmit()) {
+			console.log("not valid");
+
 			return;
 		}
 
@@ -47,14 +175,24 @@ export const CreateEditSingle = ({ onSave }) => {
 			console.log("minimum 7 days");
 			return;
 		}
-		onSave();
-		/*console.log(formData);
-		console.log(reminderData);
-		console.log(reminderDate);
-		console.log(nextReminderDate);*/
+		let saveParameters = {
+			...formData,
+			...reminderData,
+			notification_date: reminderDate,
+		};
+
+		if (hasPrefilledData) {
+			saveParameters = {
+				...saveParameters,
+				id: prefilledReminderData.id,
+			};
+		}
+		onSave(saveParameters);
 	};
 	useEffect(() => {
-		if (reminderData) {
+		const hasReminderData = Object.keys(reminderData).length > 0;
+
+		if (hasReminderData) {
 			let addSetting = { weeks: 1 };
 
 			if (reminderData.frequency_type === "w") {
@@ -70,27 +208,96 @@ export const CreateEditSingle = ({ onSave }) => {
 			if (reminderData.frequency_type === "y") {
 				addSetting = { years: reminderData.frequency };
 			}
-			let addDateObject = add(new Date(), addSetting);
-			const calculatedNotificationDate = format(
-				addDateObject,
-				"MM/dd/yyyy"
-			);
 
-			setReminderDate(calculatedNotificationDate);
+			let addDateObject = add(new Date(), addSetting);
+			if (reminderData.notification_date) {
+				let notificationDateObject = new Date(
+					reminderData.notification_date
+				);
+
+				setReminderDate(format(notificationDateObject, "MM/dd/yyyy"));
+				addDateObject = notificationDateObject;
+			}
+			if (!reminderData.notification_date) {
+				const calculatedNotificationDate = format(
+					addDateObject,
+					"MM/dd/yyyy"
+				);
+				setReminderDate(calculatedNotificationDate);
+			}
 			let nextDate = add(addDateObject, addSetting);
 			setNextReminderDate(format(nextDate, "MM/dd/yyyy"));
 		}
 	}, [reminderData]);
 
+	const onUserSelectDate = (formattedDate) => {
+		setReminderDate(formattedDate);
+		onFrequencyChange({
+			frequency: reminderData.frequency,
+			frequency_type: reminderData.frequency_type,
+			prefillDate: formattedDate,
+		});
+		setUserSetDate(true);
+	};
+
+	const onFrequencyChange = ({
+		frequency,
+		frequency_type,
+		prefillDate = null,
+	}) => {
+		let currentReminderDate = prefillDate ? prefillDate : reminderDate;
+		if (!onUserSelectDate && !hasPrefilledData) {
+			let notificationDateObject = new Date();
+			if (reminderData.notification_date) {
+				notificationDateObject = new Date(
+					reminderData.notification_date
+				);
+
+				setReminderDate(format(notificationDateObject, "MM/dd/yyyy"));
+				currentReminderDate = format(
+					notificationDateObject,
+					"MM/dd/yyyy"
+				);
+			}
+		}
+		let addDateObject = currentReminderDate
+			? new Date(currentReminderDate)
+			: new Date();
+		let addSetting = { weeks: 1 };
+
+		if (frequency_type === "w") {
+			addSetting = { weeks: frequency };
+		}
+		if (frequency_type === "d") {
+			addSetting = { days: frequency };
+		}
+		if (frequency_type === "m") {
+			addSetting = { months: frequency };
+		}
+
+		if (frequency_type === "y") {
+			addSetting = { years: frequency };
+		}
+		console.log("supppp" + addDateObject);
+		let nextDate = add(addDateObject, addSetting);
+		setNextReminderDate(format(nextDate, "MM/dd/yyyy"));
+	};
+
 	return (
 		<>
+			{calendarModal && (
+				<CalendarModal
+					onClose={() => setCalendarModal(false)}
+					onSelect={onUserSelectDate}
+				/>
+			)}
 			<TextInput
-				label="Title"
-				value={formData.title}
+				label="Subject"
+				value={formData.subject}
 				onChangeText={(text) => {
-					onChange("title", text);
+					onChange("subject", text);
 				}}
-				testID="title"
+				testID="subject"
 			/>
 			<TextInput
 				label="Description"
@@ -102,13 +309,16 @@ export const CreateEditSingle = ({ onSave }) => {
 			/>
 			<Text>Repeats</Text>
 			<ReminderOptions
-				reminderData={reminderData}
-				setReminderData={setReminderData}
+				changeFrequency={(v) => onFrequencyChange(v)}
+				{...reminderData}
 			/>
 			<TextInput
 				label="First Reminder Date"
 				value={reminderDate}
-				onChangeText={(text) => {}}
+				onChangeText={(text) => {
+					setCalendarModal(true);
+				}}
+				onFocus={() => setCalendarModal(true)}
 				testID="firstReminder"
 			/>
 
@@ -169,64 +379,38 @@ const CustomRemiderOptions = ({ frequencyType, setFrequencyType }) => {
 	);
 };
 
-const DatePicker = () => {
-	const [inputDate, setInputDate] = useState("");
-
-	return (
-		<DatePickerInput
-			locale="en"
-			label="Reminder Date"
-			value={inputDate}
-			onChange={(d) => setInputDate(d)}
-			inputMode="start"
-		/>
-	);
-};
-
-const ReminderOptions = ({ reminderData, setReminderData }) => {
+const ReminderOptions = ({ frequency_type, frequency, changeFrequency }) => {
 	const [value, setValue] = useState("");
 	const [custom, setCustom] = useState<boolean>(false);
-	const [reminderInfo, setReminderInfo] = useState<Reminderdata>(
-		reminderData.frequency
-			? {
-					frequency: reminderData.frequency ?? "1",
-					frequency_type: reminderData.frequency_type ?? "w",
-			  }
-			: {
-					frequency: "1",
-					frequency_type: "w",
-			  }
-	);
+
+	const [reminderInfo, setReminderInfo] = useState<Reminderdata>({
+		frequency: frequency ?? "1",
+		frequency_type: frequency_type ?? "w",
+	});
 
 	const onChange = (key, value) => {
-		setReminderInfo({
+		let updatedValue = {
 			...reminderInfo,
 			[key]: value,
-		});
+		};
+
+		setReminderInfo(updatedValue);
 	};
 	useEffect(() => {
-		if (value === "weekly") {
-			setCustom(false);
+		if (frequency && frequency_type) {
 			setReminderInfo({
-				frequency_type: "w",
-				frequency: "1",
+				frequency: frequency ?? "1",
+				frequency_type: frequency_type ?? "w",
 			});
 		}
-		if (value === "monthly") {
-			setCustom(false);
-			setReminderInfo({
-				frequency_type: "m",
-				frequency: "1",
-			});
-		}
-
-		if (value === "custom") {
-			setCustom(true);
-		}
-	}, [value]);
+	}, [frequency, frequency_type]);
 
 	useEffect(() => {
-		if (reminderInfo.frequency === "1" && reminderInfo.frequency === 1) {
+		let updatedFrequency = (updatedFrequency = {
+			frequency: reminderInfo.frequency,
+			frequency_type: reminderInfo.frequency_type,
+		});
+		if (reminderInfo.frequency === "1" || reminderInfo.frequency === 1) {
 			if (reminderInfo.frequency_type === "w") {
 				setValue("weekly");
 			}
@@ -234,14 +418,39 @@ const ReminderOptions = ({ reminderData, setReminderData }) => {
 				setValue("monthly");
 			}
 		}
-		setReminderData(reminderInfo);
-	}, [reminderInfo]);
+		changeFrequency(updatedFrequency);
+	}, [reminderInfo, changeFrequency]);
+
+	const setFrequencyTypeChange = (val) => {
+		if (val === "weekly") {
+			setCustom(false);
+			let updatedValue = {
+				frequency_type: "w",
+				frequency: "1",
+			};
+			setReminderInfo(updatedValue);
+		}
+		if (val === "monthly") {
+			setCustom(false);
+			let updatedValue = {
+				frequency_type: "m",
+				frequency: "1",
+			};
+			setReminderInfo(updatedValue);
+		}
+
+		if (val === "custom") {
+			setCustom(true);
+		}
+
+		setValue(val);
+	};
 
 	return (
 		<>
 			<SegmentedButtons
 				value={value}
-				onValueChange={setValue}
+				onValueChange={setFrequencyTypeChange}
 				buttons={[
 					{
 						value: "weekly",

@@ -8,6 +8,43 @@ interface SecureCallOptions {
   body?: null | any;
 }
 
+const fetchCallData = async (user, callOptions, callBody) => {
+  let fetchOptions;
+  let endPointUrl = baseUrl + callOptions.endPoint;
+  if (callOptions.options === "get") {
+    endPointUrl = callbody ? `${endPointUrl}/${callBody}` : endPointUrl;
+    fetchOptions = {
+      method: "get",
+      headers: new Headers({
+        Authorization: `Bearer ${user.accessToken}`,
+        Accept: "application/json",
+      }),
+      body: null,
+    };
+    if (callBody) {
+      endPointUrl = `${endPointUrl}/${callBody}`;
+    }
+  }
+  if (callOptions.options === "post" && callBody) {
+    fetchOptions = {
+      method: "post",
+      headers: new Headers({
+        Authorization: `Bearer ${user.accessToken}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(callBody),
+    };
+  }
+  try {
+    let callResults = await fetch(endPointUrl, fetchOptions);
+    let jsonResults = await callResults.json();
+    return [true, jsonResults, false];
+  } catch (e) {
+    console.error(e);
+    return [false, false, e.message];
+  }
+};
 const useSecureCall = (callOptions: SecureCallOptions, callNow?: bool) => {
   const signedInUser = useContext(UserContext);
   const [fetchNow, setFetchNow] = useState<bool>(
@@ -20,54 +57,47 @@ const useSecureCall = (callOptions: SecureCallOptions, callNow?: bool) => {
   const [loading, setLoading] = useState<bool>(false);
   const [callBody, setCallBody] = useState<any>(false);
   useEffect(() => {
+    const fetchFunction = async () => {
+      setLoading(true);
+      let [success, callResults, error] = await fetchCallData(
+        user,
+        callOptions,
+        callBody
+      );
+      if (success) {
+        setResults(callResults);
+      }
+      if (!success) {
+        setErrors([error]);
+      }
+      setLoading(false);
+      setFetchNow(false);
+    };
     if (fetchNow) {
-      const fetchFunction = async () => {
-        let fetchOptions;
-        if (callOptions.options === "get") {
-          fetchOptions = {
-            method: "get",
-            headers: new Headers({
-              Authorization: `Bearer ${user.accessToken}`,
-              Accept: "application/json",
-            }),
-            body: null,
-          };
-        }
-        if (callOptions.options === "post" && callBody) {
-          fetchOptions = {
-            method: "post",
-            headers: new Headers({
-              Authorization: `Bearer ${user.accessToken}`,
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            }),
-            body: JSON.stringify(callBody),
-          };
-        }
-        try {
-          setLoading(true);
-          let endPointUrl = baseUrl + callOptions.endPoint;
-
-          let callResults = await fetch(endPointUrl, fetchOptions);
-
-          //console.log(await callResults.text());
-          let jsonResults = await callResults.json();
-          setResults(jsonResults);
-        } catch (e) {
-          setResults({});
-          setErrors([e.message]);
-          console.error(e);
-        }
-        setLoading(false);
-        setFetchNow(false);
-        setCallBody(false);
-      };
       fetchFunction();
     }
   }, [callOptions, fetchNow, callBody]);
-  const refetch = (body = false) => {
-    setCallBody(body ? body : false);
-    setFetchNow(true);
+
+  const refetch = async (body = false) => {
+    const fetchFunction = async () => {
+      setLoading(true);
+      setFetchNow(false);
+      let [success, callResults, error] = await fetchCallData(
+        user,
+        callOptions,
+        body
+      );
+      if (success) {
+        setResults(callResults);
+      }
+      if (!success) {
+        setErrors([error]);
+        setResults({});
+      }
+      setLoading(false);
+      setFetchNow(false);
+    };
+    await fetchFunction();
   };
 
   return [results, loading, errors, refetch];

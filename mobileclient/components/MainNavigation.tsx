@@ -17,7 +17,7 @@ function MainNavigation() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="Create Edit Single Reminder"
+          name="CreateEditSingleReminder"
           component={CreateEditSingleReminder}
         />
       </Stack.Navigator>

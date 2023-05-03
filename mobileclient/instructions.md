@@ -12,3 +12,4 @@ keytool -list -v -keystore ./android/app/debug.keystore -alias androiddebugkey -
 emulator -list-avds
 for restarting the emulator fresh
 emulator @Copy1_of_Pixel_2_API_31 -wipe-data
+psql -h localhost -p 5432 -d infrequent_scheduler -U adarshram -W

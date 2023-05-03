@@ -18,23 +18,8 @@ export const ActionButtons = ({ navigation }) => {
             {
                icon: "plus",
                onPress: () => {
-                  navigation.navigate("Create Edit Single Reminder");
+                  navigation.navigate("CreateEditSingleReminder");
                },
-            },
-            {
-               icon: "star",
-               label: "Star",
-               onPress: () => console.log("Pressed star"),
-            },
-            {
-               icon: "email",
-               label: "Email",
-               onPress: () => console.log("Pressed email"),
-            },
-            {
-               icon: "bell",
-               label: "Remind",
-               onPress: () => console.log("Pressed notifications"),
             },
          ]}
          onStateChange={onStateChange}

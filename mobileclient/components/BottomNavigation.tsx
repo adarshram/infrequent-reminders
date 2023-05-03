@@ -9,20 +9,13 @@ import { Portal, Provider } from "react-native-paper";
 import { ActionButtons as FloatingActionButtons } from "../components/MainSection/ActionButtons";
 
 import Profile from "../pages/Profile";
+import Home from "../pages/Home";
 
 const Tab = createBottomTabNavigator();
 
 type Props = {
   user: string;
 };
-
-function HomeScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Home!</Text>
-    </View>
-  );
-}
 
 function SettingsScreen() {
   return (
@@ -38,7 +31,7 @@ function BottomNavigation({ user, navigation }: Props) {
       <Tab.Navigator>
         <Tab.Screen
           name="Home"
-          component={HomeScreen}
+          component={Home}
           options={{
             tabBarIcon: () => <Entypo name="home" size={24} color="black" />,
           }}
