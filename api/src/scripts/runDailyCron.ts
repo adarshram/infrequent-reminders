@@ -21,5 +21,7 @@ const runDailyCron = async () => {
 		}),
 	);
 	console.log(dailyCronResults);
+	const snoozeResults = await pendingNotification.snoozeYesterdaysNotifications();
+	console.log(snoozeResults);
 };
 runCron();

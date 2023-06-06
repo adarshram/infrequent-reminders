@@ -296,6 +296,15 @@ const generatePendingNotificationQuery = (
 export const getUsersWithPendingNotifications = async () => {
 	let today = new Date();
 	let beforeHalfYear = subDays(today, 180);
+
+	let notifications = await getRepository(UserNotifications).find({
+		relations: ['user_profile'],
+		where: {
+			notification_date: Between(beforeHalfYear, today),
+
+			is_active: 1,
+		},
+	});
 	let notificationsQuery = await getRepository(UserNotifications)
 		.createQueryBuilder('up')
 		.where('up.notification_date >= :startDate', { startDate: beforeHalfYear })
@@ -321,6 +330,39 @@ export const getPendingNotifications = async (user_id: string): Promise<UserNoti
 			user_id: user_id,
 			is_active: 1,
 		},
+	});
+	return notifications;
+};
+export const getYesterdaysNotifications = async (
+	user_id?: string,
+): Promise<UserNotifications[]> => {
+	let today = new Date();
+	let yesterday = subDays(today, 1);
+	let baseWhere = {
+		notification_date: yesterday,
+		is_active: 1,
+	};
+	interface WhereConstraintInterface {
+		notification_date: Date;
+		is_active: number;
+		user_id?: string;
+	}
+
+	let whereObject: WhereConstraintInterface;
+	if (user_id) {
+		whereObject = {
+			...baseWhere,
+			user_id: user_id,
+		};
+	}
+	if (!whereObject) {
+		whereObject = {
+			...baseWhere,
+		};
+	}
+	let notifications = await getRepository(UserNotifications).find({
+		relations: ['meta_notifications'],
+		where: whereObject,
 	});
 	return notifications;
 };
@@ -394,7 +436,7 @@ export const snoozeNotificationObject = async (
 		frequency_type,
 		alreadySnoozed,
 	);
-	notification.notification_date = snoozeDateResult.date;
+	notification.notification_date = new Date(snoozeDateResult.date);
 
 	if (!cron) {
 		notification.meta_notifications.user_snoozed = notification.meta_notifications.user_snoozed + 1;
@@ -408,7 +450,6 @@ export const snoozeNotificationObject = async (
 
 	const userNotificationsRepository = await getRepository(UserNotifications);
 	const result = await userNotificationsRepository.save(notification);
-
 	return snoozeDateResult;
 };
 

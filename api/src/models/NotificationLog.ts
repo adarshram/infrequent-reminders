@@ -46,6 +46,43 @@ export const getNotificationsByDate = async (
 	});
 	return userNotificationLog;
 };
+
+export const getNotificationLogForId = async (
+	id: number,
+	userId?: string,
+): Promise<NotificationLog[]> => {
+	type UserNotificationIdInterface = {
+		id: number;
+	};
+
+	type WhereConstraintInterface = {
+		user_notifications: UserNotificationIdInterface;
+		user_id?: string;
+	};
+
+	let userNotificationWhere: UserNotificationIdInterface = { id: id };
+
+	let whereConstraints: WhereConstraintInterface = {
+		user_notifications: userNotificationWhere,
+	};
+	if (userId) {
+		whereConstraints = {
+			...whereConstraints,
+			user_id: userId,
+		};
+	}
+
+	let userNotificationLog = await getRepository(NotificationLog).find({
+		relations: ['user_notifications'],
+		where: whereConstraints,
+
+		order: {
+			created_at: 'DESC',
+		},
+	});
+	return userNotificationLog;
+};
+
 export const getNotificationsForToday = async (userId: string): Promise<UserNotifications[]> => {
 	//: Promise<UserNotifications[]>
 	let today = new Date();

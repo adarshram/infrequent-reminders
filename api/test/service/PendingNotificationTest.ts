@@ -37,7 +37,8 @@ import { PendingNotification } from './../../src/service/PendingNotification';
 import * as userVapidKeys from './../../src/models/UserVapidKeys';
 import * as notificationUtils from './../../src/utils/notification';
 
-//npm test test/service/PendingNotificationTest.ts -- --grep "process pending notification per user"
+//npm test test/service/PendingNotificationTest.ts -- --grep "gets users with notification"
+//npm test test/service/PendingNotificationTest.ts -- --grep "snooze yesterdays notifications"
 
 before(async () => {});
 
@@ -46,8 +47,43 @@ describe('notification data handler', () => {
 		await establishDatabaseConnection();
 		await initializeFireBase();
 		let pendingNotification = new PendingNotification();
+
 		let users = await pendingNotification.getUsersWithNotification();
+
 		expect(users.length > 0).to.equal(true);
+	});
+	it('snooze yesterdays notifications', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
+		let pendingNotification = new PendingNotification();
+
+		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
+		await deleteNotificationsForUser('83zkNxe3BtSpXsFgxrDgw49ktWj2');
+		let yesterday = addDays(new Date(), -1);
+		let notificationParameters = {
+			user_id: validUserId,
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 2,
+			notification_date: yesterday,
+			is_active: true,
+		};
+
+		let notification = await createNotificationsForUser(notificationParameters);
+		let notification1 = await createNotificationsForUser(notificationParameters);
+		let expectedDate = addDays(new Date(), 2);
+		const snoozeResults = await pendingNotification.snoozeYesterdaysNotifications();
+		snoozeResults.map((currentResult) => {
+			if (typeof currentResult !== 'boolean') {
+				expect(format(expectedDate, 'yyyy-MM-dd')).to.equal(
+					format(currentResult.date, 'yyyy-MM-dd'),
+				);
+			}
+		});
+
+		await deleteNotification(notification.id);
+		await deleteNotification(notification1.id);
 	});
 
 	it('process pending notification per user', async () => {
@@ -62,6 +98,10 @@ describe('notification data handler', () => {
 		let emailStub = stub(notificationUtils, 'sendNotificationEmail').resolves({
 			success: true,
 			errors: [],
+		});
+		let deviceStub = stub(notificationUtils, 'sendNotificationToMobileDevice').resolves({
+			success: true,
+			errors: { unregistered: '' },
 		});
 
 		stub(userVapidKeys, 'getKeysForUser').resolves([
@@ -80,6 +120,14 @@ describe('notification data handler', () => {
 						vapidKey:
 							'ekcV9eoppsrD4xxaXho4_Z:APA91bFdIPPPMQzFkGzmdHDqSZMKUBWiV7ek7PJoT0WGpesy1u_5B9Y2ekclOTdmDhgTbUNUoG7tS477O-5Im-YqLvgRQpWgvCXew8gP74yNY4KRVQMvFz0l-0rrIIfhgirbtJ8seQDv',
 					},
+					{
+						vapidKey:
+							'e9wXEr5WQW2FmjBCFrbHcE:APA91bG9ZaXGs2rpiU4XDMVwvBbbV6sYNiSUOcDNNYJYZDA3UKchklSbNLBveQ-qF-mLZlQvPtizMqCY0zPWfXnSPkHfWG0TTFSHXjlWmsqlz783FM2UebMnARbXkM3Xy7Cm0BW47geP',
+						name: 'Mobile App',
+						isMobile: true,
+						isAndroid: true,
+						enabled: true,
+					},
 				],
 				fireBaseRefId: '83zkNxe3BtSpXsFgxrDgw49ktWj2',
 				created_at: 4,
@@ -87,6 +135,7 @@ describe('notification data handler', () => {
 		]);
 
 		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
+		await deleteNotificationsForUser('83zkNxe3BtSpXsFgxrDgw49ktWj2');
 		let previousDate = addDays(new Date(), -5);
 		let notificationParameters = {
 			user_id: validUserId,
@@ -99,6 +148,7 @@ describe('notification data handler', () => {
 		};
 
 		let notification = await createNotificationsForUser(notificationParameters);
+		let notification1 = await createNotificationsForUser(notificationParameters);
 
 		let users = ['83zkNxe3BtSpXsFgxrDgw49ktWj2'];
 		await Promise.all(
@@ -108,8 +158,10 @@ describe('notification data handler', () => {
 			}),
 		);
 		await deleteNotification(notification.id);
+		await deleteNotification(notification1.id);
 		assert.calledOnce(emailStub);
 		assert.calledOnce(vapidKeyStub);
+		assert.callCount(deviceStub, 2);
 	});
 
 	it('sends notification for specific user yMwuesozlicC6FSSGCaYmhK1Y6r1', async () => {

@@ -43,7 +43,7 @@ import 'mocha';
 import { createConnection } from 'typeorm';
 import { getTime } from 'date-fns';
 //npm test test/models/UserVapidKeysTest.ts -- --grep "saves device list for user"
-//npm test test\models\UserVapidKeysTest.ts -- --grep "gets user email"
+//npm test test/models/UserVapidKeysTest.ts -- --grep "get vapid key"
 
 before(async () => {
   await establishDatabaseConnection();
@@ -51,6 +51,11 @@ before(async () => {
 });
 
 describe('send notification handlers', () => {
+  it('get vapid key', async () => {
+    const fireBaseRefId = 'VO6ioexwwmefvE8BhvwTAUi8eDq2';
+    let userKeys = await userVapidKeys.getKeysForUser(fireBaseRefId);
+    console.log(JSON.stringify(userKeys));
+  });
   it('save user device key', async () => {
     let fireBaseRefId = '123';
     await userVapidKeys.deleteForUser(fireBaseRefId);

@@ -12,7 +12,7 @@ import {
   getNotificationInMonthForUser,
   getNotificationsForUserByDate,
 } from '../models/UserNotifications';
-import { getNotificationsForToday } from '../models/NotificationLog';
+import { getNotificationsForToday, getNotificationLogForId } from '../models/NotificationLog';
 import MetaNotificationsClass from '../models/MetaNotifications';
 import { successResponse, errorResponse } from '../responses';
 
@@ -37,6 +37,24 @@ export const listNotificationsForDate = async (req: Request, res: Response) => {
   successResponse(res, results);
 };
 
+export const showLog = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const fBaseUser = res.locals.user;
+  try {
+    const notificationLogDetails = await getNotificationLogForId(parseInt(id), fBaseUser.uid);
+    if (!notificationLogDetails) {
+      errorResponse(res, 'No Log Details Found');
+      return;
+    }
+
+    let response = {
+      ...notificationLogDetails,
+    };
+    successResponse(res, response);
+  } catch (err) {
+    errorResponse(res, err.message ?? 'Something Went Wrong');
+  }
+};
 export const show = async (req: Request, res: Response) => {
   const { id } = req.params;
   const fBaseUser = res.locals.user;

@@ -6,6 +6,7 @@ import {
 	getUsersWithPendingNotifications,
 	getPendingNotifications,
 	snoozeNotificationObject,
+	getYesterdaysNotifications,
 } from '../models/UserNotifications';
 import { createRecordFromNotification } from '../models/NotificationLog';
 import { UserNotifications } from '../entity/UserNotifications';
@@ -18,7 +19,11 @@ import {
 } from '../models/UserProfile';
 import * as userVapidKeys from '../models/UserVapidKeys';
 
-import { sendNotificationMessageToVapidKey, sendNotificationEmail } from '../utils/notification';
+import {
+	sendNotificationMessageToVapidKey,
+	sendNotificationEmail,
+	sendNotificationToMobileDevice,
+} from '../utils/notification';
 import { getCredentialsByKey } from '../models/SystemCredentials';
 
 export class PendingNotification {
@@ -29,6 +34,17 @@ export class PendingNotification {
 
 	getPendingNotifications = async (user_id: string) => {
 		return getPendingNotifications(user_id);
+	};
+
+	snoozeYesterdaysNotifications = async () => {
+		let yesterdaysNotifications = await getYesterdaysNotifications();
+		let snoozedResults = await Promise.all(
+			yesterdaysNotifications.map(async (singleNotification) => {
+				let cron = true;
+				return await snoozeNotificationObject(singleNotification, cron);
+			}),
+		);
+		return snoozedResults;
 	};
 
 	send = async (notifications: UserNotifications[], user_id: string): Promise<boolean> => {
@@ -63,12 +79,12 @@ export class PendingNotification {
 			);
 			sentNotification = deviceNotification || emailNotification;
 		}
-
 		if (sentNotification) {
 			let snoozedResults = await Promise.all(
 				notifications.map(async (singleNotification) => {
 					let cron = true;
-					return await snoozeNotificationObject(singleNotification, cron);
+					//return await snoozeNotificationObject(singleNotification, cron);
+					return true;
 				}),
 			);
 		}
@@ -87,6 +103,22 @@ export class PendingNotification {
 		return createdArray;
 	};
 
+	sendSeperateNotificationsToMobile = async (pending: UserNotifications[], deviceKey: string) => {
+		let isSuccess: boolean;
+		let errorMessages = { unregistered: '', code: '' };
+		await Promise.all(
+			pending.map(async (current) => {
+				let { success, errors } = await sendNotificationToMobileDevice(deviceKey, current);
+				if (!success) {
+					isSuccess = false;
+					errorMessages = errors;
+				}
+			}),
+		);
+
+		return { success: isSuccess, errors: errorMessages };
+	};
+
 	handleVapidKeyNotificationForUser = async (
 		pending: UserNotifications[],
 		user_id: string,
@@ -99,22 +131,37 @@ export class PendingNotification {
 		if (pending.length == 1) {
 			notificationSubject = `Your Reminder ${pending[0].subject} is overdue`;
 		}
+		const handleSuccessOrFailure = async (success, errors, device) => {
+			if (success) {
+				return true;
+			}
+			if (!success) {
+				if (typeof errors !== 'boolean' && errors.unregistered && errors.unregistered != '') {
+					let res = await userVapidKeys.deleteDeviceForUser(user_id, device.vapidKey);
+				}
+				return false;
+			}
+		};
 
 		let successFulKeys = await Promise.all(
 			notificationDevices
 				.map(async (device) => {
 					if (device.enabled) {
-						let { success, errors } = await sendNotificationMessageToVapidKey(
-							device.vapidKey,
-							notificationSubject,
-						);
-						if (success) {
-							return true;
+						let success = false;
+						let errors;
+						if (!device?.isMobile) {
+							let { success, errors } = await sendNotificationMessageToVapidKey(
+								device.vapidKey,
+								notificationSubject,
+							);
+							return await handleSuccessOrFailure(success, errors, device);
 						}
-						if (!success) {
-							if (typeof errors !== 'boolean' && errors.unregistered && errors.unregistered != '') {
-								let res = await userVapidKeys.deleteDeviceForUser(user_id, device.vapidKey);
-							}
+						if (device.isMobile) {
+							let { success, errors } = await this.sendSeperateNotificationsToMobile(
+								pending,
+								device.vapidKey,
+							);
+							return await handleSuccessOrFailure(success, errors, device);
 						}
 					}
 					return false;

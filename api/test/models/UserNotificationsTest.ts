@@ -45,7 +45,7 @@ before(async () => {
 });
 
 //npm test test\models\UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
-//npm test test/models/UserNotificationsTest.ts -- --grep "notification month for user"
+//npm test test/models/UserNotificationsTest.ts -- --grep "join meta notification"
 
 describe('save new reminder set', () => {
 	let reminderData = {
