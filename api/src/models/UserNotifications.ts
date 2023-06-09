@@ -6,6 +6,7 @@ import {
 	MoreThanOrEqual,
 	LessThanOrEqual,
 	Between,
+	FindOperator,
 } from 'typeorm';
 import {
 	format,
@@ -333,17 +334,15 @@ export const getPendingNotifications = async (user_id: string): Promise<UserNoti
 	});
 	return notifications;
 };
-export const getYesterdaysNotifications = async (
-	user_id?: string,
-): Promise<UserNotifications[]> => {
+export const getEarlierNotifications = async (user_id?: string): Promise<UserNotifications[]> => {
 	let today = new Date();
 	let yesterday = subDays(today, 1);
 	let baseWhere = {
-		notification_date: yesterday,
+		notification_date: LessThanOrEqual(yesterday),
 		is_active: 1,
 	};
 	interface WhereConstraintInterface {
-		notification_date: Date;
+		notification_date: FindOperator<Date>;
 		is_active: number;
 		user_id?: string;
 	}
@@ -363,6 +362,18 @@ export const getYesterdaysNotifications = async (
 	let notifications = await getRepository(UserNotifications).find({
 		relations: ['meta_notifications'],
 		where: whereObject,
+	});
+	return notifications;
+};
+export const getNotificationsForToday = async (user_id: string): Promise<UserNotifications[]> => {
+	let today = new Date();
+	let notifications = await getRepository(UserNotifications).find({
+		relations: ['meta_notifications'],
+		where: {
+			notification_date: LessThanOrEqual(today),
+			user_id: user_id,
+			is_active: 1,
+		},
 	});
 	return notifications;
 };

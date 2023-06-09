@@ -47,7 +47,9 @@ export const calculateSnoozeDate = (
     snoozePercent = 100;
     shouldReset = true;
   }
-  let snoozeDays = Math.ceil(daysToNextNotification * (snoozePercent / 100));
+  let calculatedSnoozeDays = Math.ceil(daysToNextNotification * (snoozePercent / 100));
+  const minSnoozeDays = 2;
+  let snoozeDays = calculatedSnoozeDays < minSnoozeDays ? minSnoozeDays : calculatedSnoozeDays;
   let snoozeDate = addDays(new Date(), snoozeDays);
 
   return {

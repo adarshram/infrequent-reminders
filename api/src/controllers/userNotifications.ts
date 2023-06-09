@@ -11,8 +11,9 @@ import {
   completeNotification,
   getNotificationInMonthForUser,
   getNotificationsForUserByDate,
+  getNotificationsForToday,
 } from '../models/UserNotifications';
-import { getNotificationsForToday, getNotificationLogForId } from '../models/NotificationLog';
+import { getNotificationLogForId } from '../models/NotificationLog';
 import MetaNotificationsClass from '../models/MetaNotifications';
 import { successResponse, errorResponse } from '../responses';
 

@@ -6,7 +6,7 @@ import {
 	getUsersWithPendingNotifications,
 	getPendingNotifications,
 	snoozeNotificationObject,
-	getYesterdaysNotifications,
+	getEarlierNotifications,
 } from '../models/UserNotifications';
 import { createRecordFromNotification } from '../models/NotificationLog';
 import { UserNotifications } from '../entity/UserNotifications';
@@ -36,8 +36,8 @@ export class PendingNotification {
 		return getPendingNotifications(user_id);
 	};
 
-	snoozeYesterdaysNotifications = async () => {
-		let yesterdaysNotifications = await getYesterdaysNotifications();
+	snoozeEarlierNotifications = async () => {
+		let yesterdaysNotifications = await getEarlierNotifications();
 		let snoozedResults = await Promise.all(
 			yesterdaysNotifications.map(async (singleNotification) => {
 				let cron = true;
