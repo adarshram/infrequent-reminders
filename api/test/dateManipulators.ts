@@ -12,7 +12,7 @@ import {
   compareAsc,
 } from 'date-fns';
 
-//npm test test\dateManipulators.ts -- --grep "snoozes notifications depending on count"
+//npm test test/dateManipulators.ts -- --grep "snoozes notifications depending on count"
 
 describe('dbConnection', () => {
   it('dbConnection', async () => {
@@ -29,7 +29,6 @@ describe('dbConnection', () => {
 
 describe('should give snooze date', () => {
   it('week snooze date', () => {
-    console.log(process.env.DATABASE_URL);
     const result = calculateSnoozeDate(new Date(), 2, 'w');
     expect(result.days).to.equal(2);
   });
@@ -38,8 +37,11 @@ describe('should give snooze date', () => {
     expect(result.days).to.equal(6);
   });
   it('snoozes notifications depending on count', () => {
+    //Min 2 days
+    let result = calculateSnoozeDate(new Date(), 1, 'w');
+    expect(result.days == 2).to.equal(true);
     //10 percent by default
-    let result = calculateSnoozeDate(new Date(), 1, 'm');
+    result = calculateSnoozeDate(new Date(), 1, 'm');
     expect(result.days >= 3 && result.days <= 4).to.equal(true);
 
     //30 percent

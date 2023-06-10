@@ -26,6 +26,7 @@ import {
 	getNotificationsForUserByDate,
 	getPendingNotifications,
 	getUsersWithPendingNotifications,
+	getNotificationsForToday,
 } from './../../src/models/UserNotifications';
 import MetaNotificationsClass from './../../src/models/MetaNotifications';
 
@@ -44,8 +45,7 @@ before(async () => {
 	await establishDatabaseConnection();
 });
 
-//npm test test\models\UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
-//npm test test/models/UserNotificationsTest.ts -- --grep "join meta notification"
+//npm test test/models/UserNotificationsTest.ts -- --grep "test todays notifications"
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -79,6 +79,27 @@ describe('save new reminder set', () => {
 			}),
 		);
 	};
+	it('test todays notifications', async () => {
+		let today = new Date();
+		let notificationParameters = {
+			user_id: '12345',
+			subject: '12312312',
+			description: 'scdsacsac',
+			frequency_type: 'w',
+			frequency: 1,
+			notification_date: today,
+			is_active: true,
+		};
+
+		await deleteNotificationsForUser(notificationParameters.user_id);
+
+		let createdNotification = await createNotificationsForUser(notificationParameters);
+		let notificationsForToday = await getNotificationsForToday(notificationParameters.user_id);
+		expect(notificationsForToday.length > 0).to.be.equal(true);
+		expect(notificationsForToday[0].id).to.be.equal(createdNotification.id);
+		//cleanup
+		await deleteNotificationsForUser(notificationParameters.user_id);
+	}).timeout(10000);
 	it('test distinct users with pending notifications', async () => {
 		let previousDate = addDays(new Date(), -10);
 		let notificationParameters = {

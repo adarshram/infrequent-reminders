@@ -38,7 +38,7 @@ import * as userVapidKeys from './../../src/models/UserVapidKeys';
 import * as notificationUtils from './../../src/utils/notification';
 
 //npm test test/service/PendingNotificationTest.ts -- --grep "gets users with notification"
-//npm test test/service/PendingNotificationTest.ts -- --grep "snooze yesterdays notifications"
+//npm test test/service/PendingNotificationTest.ts -- --grep "snooze last days notifications"
 
 before(async () => {});
 
@@ -52,7 +52,7 @@ describe('notification data handler', () => {
 
 		expect(users.length > 0).to.equal(true);
 	});
-	it('snooze yesterdays notifications', async () => {
+	it('snooze last days notifications', async () => {
 		await establishDatabaseConnection();
 		await initializeFireBase();
 		let pendingNotification = new PendingNotification();
@@ -60,6 +60,7 @@ describe('notification data handler', () => {
 		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
 		await deleteNotificationsForUser('83zkNxe3BtSpXsFgxrDgw49ktWj2');
 		let yesterday = addDays(new Date(), -1);
+		let dayBefore = addDays(new Date(), -5);
 		let notificationParameters = {
 			user_id: validUserId,
 			subject: '12312312',
@@ -71,11 +72,19 @@ describe('notification data handler', () => {
 		};
 
 		let notification = await createNotificationsForUser(notificationParameters);
-		let notification1 = await createNotificationsForUser(notificationParameters);
+		let notification1 = await createNotificationsForUser({
+			...notificationParameters,
+			notification_date: dayBefore,
+		});
+		console.log({
+			...notificationParameters,
+			notification_date: dayBefore,
+		});
 		let expectedDate = addDays(new Date(), 2);
-		const snoozeResults = await pendingNotification.snoozeYesterdaysNotifications();
+		const snoozeResults = await pendingNotification.snoozeEarlierNotifications();
 		snoozeResults.map((currentResult) => {
 			if (typeof currentResult !== 'boolean') {
+				console.log(currentResult);
 				expect(format(expectedDate, 'yyyy-MM-dd')).to.equal(
 					format(currentResult.date, 'yyyy-MM-dd'),
 				);
