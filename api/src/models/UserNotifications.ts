@@ -452,11 +452,14 @@ export const snoozeNotificationObject = async (
 	if (!cron) {
 		notification.meta_notifications.user_snoozed = notification.meta_notifications.user_snoozed + 1;
 	}
-	if (cron) {
-		notification.meta_notifications.cron_snoozed = notification.meta_notifications.cron_snoozed + 1;
-	}
-	if (snoozeDateResult.shouldReset) {
-		notification.meta_notifications.cron_snoozed = 0;
+	if (notification.meta_notifications) {
+		if (cron) {
+			notification.meta_notifications.cron_snoozed =
+				notification.meta_notifications.cron_snoozed + 1;
+		}
+		if (snoozeDateResult.shouldReset) {
+			notification.meta_notifications.cron_snoozed = 0;
+		}
 	}
 
 	const userNotificationsRepository = await getRepository(UserNotifications);
@@ -560,7 +563,6 @@ export const completeLinkedSetIfPresent = async (id: number): Promise<DateReturn
 	}
 	let mainNotification = linkedReminderArray[mainNotificationIndex];
 	let nextNotification = linkedReminderArray[mainNotificationIndex + 1] ?? undefined;
-	console.log(linkedReminderArray);
 	const userNotificationsRepository = await getRepository(UserNotifications);
 	if (mainNotification) {
 		mainNotification.is_active = false;
