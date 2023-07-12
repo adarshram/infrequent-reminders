@@ -10,13 +10,24 @@ import useFbaseAuthUser from "./hooks/useFbaseAuthUser";
 import { UserContext } from "./models/UserContext";
 import { Button, Text } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { FAB, Portal, Provider } from "react-native-paper";
+import {
+  DefaultTheme,
+  FAB,
+  Portal,
+  Provider as PaperProvider,
+} from "react-native-paper";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { Home } from "./components/Home";
+import { Appearance } from "react-native";
 
+const theme = {
+  ...DefaultTheme,
+  mode: "adaptive",
+  dark: Appearance.getColorScheme() === "dark",
+};
 const App = () => {
   const [
     { googleSignin, signInWithEmailAndPassword, logOut: logOut },
@@ -33,7 +44,7 @@ const App = () => {
     },
     authErrors: authErrors ? authErrors : [],
   };
-
+  console.log(theme);
   return (
     <SafeAreaProvider>
       <UserContext.Provider value={userContextObject}>
@@ -41,13 +52,12 @@ const App = () => {
           <Login />
         ) : (
           <>
-            <Provider>
+            <PaperProvider theme={theme}>
               <Portal>
                 <MainNavigation />
-
                 <Text>Already Logged In as {loggedInUser.email}</Text>
               </Portal>
-            </Provider>
+            </PaperProvider>
           </>
         )}
       </UserContext.Provider>

@@ -6,7 +6,7 @@ function useServerCall(initialUrl = false, initialData = null) {
   const [url, setUrl] = useState(initialUrl ?? false);
   const [data, setData] = useState(initialData);
   const [isLoading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState([]);
   const signedInUser = useContext(UserContext);
   const { user } = signedInUser;
 
@@ -16,6 +16,7 @@ function useServerCall(initialUrl = false, initialData = null) {
     }
     setLoading(true);
     try {
+      setData(null);
       const options = {
         method,
         headers: new Headers({
@@ -27,13 +28,17 @@ function useServerCall(initialUrl = false, initialData = null) {
       };
       const requestUrl = `${baseUrl}${url}`;
       const response = await fetch(requestUrl, options);
+
       const responseData = await response.json();
+
       setData(responseData);
+
       if (!response.ok) {
         throw new Error(responseData.message || "Something went wrong!");
       }
     } catch (error) {
       setError(error.message);
+      setData(false);
     } finally {
       setLoading(false);
     }

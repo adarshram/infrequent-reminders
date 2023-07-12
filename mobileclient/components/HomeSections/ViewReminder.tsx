@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { format, add } from "date-fns";
 import useServerCall from "../../hooks/useServerCall";
-import useSecureCall from "../../hooks/useSecureCall";
 import { ViewSingle } from "../../components/Reminder/ViewSingle";
 
 export const ViewReminder = ({ navigation, date, refresh }) => {
@@ -31,6 +30,9 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
    const [completeData, , , completeNotification] = useServerCall();
 
    if (date && remindersForDate === null && !remindersLoading) {
+      fetchRemindersForDate.post("user/notifications/listByDate", {
+         date: format(date, "yyyy-MM-dd"),
+      });
    }
 
    useEffect(() => {
@@ -59,7 +61,7 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
       fetchRemindersForDate.post("user/notifications/listByDate", {
          date: format(date, "yyyy-MM-dd"),
       });
-      console.log(refresh);
+
       refresh();
    };
 
@@ -82,7 +84,6 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
          date: format(date, "yyyy-MM-dd"),
       });
    };
-
    return (
       <>
          <Text>View Reminders for {format(date, "MM/dd/yyyy")}</Text>
@@ -102,6 +103,11 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
                      onDelete={(reminder) => onDelete(reminder)}
                      onEdit={(reminder) => {
                         navigation.navigate("CreateEditSingleReminder", {
+                           reminderId: reminder.id,
+                        });
+                     }}
+                     onView={(reminder) => {
+                        navigation.navigate("ViewReminderDetails", {
                            reminderId: reminder.id,
                         });
                      }}

@@ -3,12 +3,14 @@ import { Text, View, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { Portal, Provider } from "react-native-paper";
 import { ActionButtons as FloatingActionButtons } from "../components/MainSection/ActionButtons";
-
+import ReceiveNotifications from "../components/ReceiveNotifications";
 import Profile from "../pages/Profile";
+import PendingList from "../pages/PendingList";
+
 import Home from "../pages/Home";
 
 const Tab = createBottomTabNavigator();
@@ -28,6 +30,7 @@ function SettingsScreen() {
 function BottomNavigation({ user, navigation }: Props) {
   return (
     <>
+      <ReceiveNotifications navigation={navigation} />
       <Tab.Navigator>
         <Tab.Screen
           name="Home"
@@ -46,6 +49,15 @@ function BottomNavigation({ user, navigation }: Props) {
                 size={24}
                 color="black"
               />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Pending"
+          component={PendingList}
+          options={{
+            tabBarIcon: () => (
+              <MaterialIcons name="pending-actions" size={24} color="black" />
             ),
           }}
         />

@@ -13,6 +13,8 @@ import { TextInput, Button, Banner, Appbar } from "react-native-paper";
 
 import { UserContext } from "../models/UserContext";
 import useSecureCall from "../hooks/useSecureCall";
+import useServerCall from "../hooks/useServerCall";
+
 import { Form, ProfileFormInput } from "../components/Profile/Form";
 
 interface ProfileSaveData {
@@ -26,11 +28,16 @@ export default function Profile() {
 	const [formInput, setFormInput] = useState<ProfileFormInput>(
 		undefined as ProfileFormInput
 	);
-
-	const [results, loading, errors, refetch] = useSecureCall({
+	const [results, loading, errors, refetch] = useServerCall();
+	const [saveResults, , saveErrors, saveCall] = useServerCall();
+	/*const [results, loading, errors, refetch] = useSecureCall({
 		endPoint: "user/profile",
 		options: "get",
-	});
+	});*/
+	const notInitiated = results === null && !loading;
+	if (notInitiated) {
+		refetch.get(`user/profile`);
+	}
 
 	useEffect(() => {
 		if (results && results.data) {
@@ -42,16 +49,9 @@ export default function Profile() {
 			});
 		}
 	}, [results]);
-	const [saveResults, , saveErrors, saveCall] = useSecureCall(
-		{
-			endPoint: "user/profile/save",
-			options: "post",
-		},
-		false
-	);
-
 	const onSave = async (saveBody: ProfileSaveData) => {
-		saveCall(saveBody);
+		await saveCall.post("user/profile/save", saveBody);
+		await refetch.get(`user/profile`);
 	};
 
 	return (

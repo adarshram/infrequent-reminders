@@ -16,13 +16,14 @@ import { Button } from "react-native";
 import { format, add } from "date-fns";
 import useServerCall from "../hooks/useServerCall";
 import { ViewReminder } from "../components/HomeSections/ViewReminder";
-import { CreateEditSingleReminder } from "../pages/CreateEditSingleReminder";
+import { NotificationHandler } from "../components/HomeSections/NotificationHandler";
 import { useIsFocused } from "@react-navigation/native";
 
 export default function Home(props) {
 	const { navigation } = props;
 	const isFocused = useIsFocused();
 	let today = new Date();
+
 	const firstCalendarDate = add(today, { month: -2 });
 	const lastCalendarDate = add(today, { years: 2 });
 	const [currentMonth, setCurrentMonth] = useState(today);
@@ -42,6 +43,7 @@ export default function Home(props) {
 			fetchRemindersForMonth.post(`user/notifications/fullMonth`, {
 				month: format(currentMonth, "yyyy-MM"),
 			});
+			//getTokenFromFireBase();
 		}
 	}, [currentMonth]);
 	useEffect(() => {
@@ -91,6 +93,7 @@ export default function Home(props) {
 
 	return (
 		<>
+			<NotificationHandler />
 			<Calendar
 				// Initially visible month. Default = now
 				// Minimum date that can be selected, dates before minDate will be grayed out. Default = undefined

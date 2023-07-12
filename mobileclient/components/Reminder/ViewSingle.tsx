@@ -13,7 +13,7 @@ import { format, add } from "date-fns";
 
 import { MaterialIcons } from "react-native-vector-icons";
 export const ViewSingle = (props) => {
-	let { reminder, onEdit, onSnooze, onComplete, onDelete } = props;
+	let { reminder, onEdit, onSnooze, onComplete, onDelete, onView } = props;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	const getFrequencyText = () => {
 		let text;
@@ -68,6 +68,9 @@ export const ViewSingle = (props) => {
 							onEdit={() => {
 								onEdit(reminder);
 							}}
+							onView={() => {
+								onView(reminder);
+							}}
 						/>
 					)}
 				</Card.Actions>
@@ -75,7 +78,7 @@ export const ViewSingle = (props) => {
 		</TouchableRipple>
 	);
 };
-const ExtraOptions = ({ onEdit, onSnooze, onComplete, onDelete }) => {
+const ExtraOptions = ({ onEdit, onSnooze, onComplete, onDelete, onView }) => {
 	return (
 		<View
 			style={{
@@ -89,6 +92,7 @@ const ExtraOptions = ({ onEdit, onSnooze, onComplete, onDelete }) => {
 				mode="Outlined"
 				compact={true}
 				onPress={() => onEdit()}
+				onLongPress={() => onView()}
 			></Button>
 			<Button
 				icon={() => <MaterialIcons name="snooze" />}

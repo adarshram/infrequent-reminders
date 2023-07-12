@@ -107,8 +107,10 @@ const CalendarModal = ({ onClose, onSelect }) => {
 
 export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 	const [formData, setFormData] = useState({});
-	const [reminderData, setReminderData] = useState({});
-
+	const [reminderData, setReminderData] = useState({
+		frequency: "1",
+		frequency_type: "w",
+	});
 	const [errors, setErrors] = useState([]);
 	const [reminderDate, setReminderDate] = useState("");
 	const [nextReminderDate, setNextReminderDate] = useState("");
@@ -123,16 +125,24 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 	const hasPrefilledData =
 		prefilledReminderData && prefilledReminderData.id ? true : false;
 	useEffect(() => {
-		if (prefilledReminderData) {
+		const hasPrefilledData =
+			prefilledReminderData && prefilledReminderData.id ? true : false;
+		if (hasPrefilledData) {
 			setReminderData({
 				frequency: prefilledReminderData.frequency,
 				frequency_type: prefilledReminderData.frequency_type,
 				notification_date: prefilledReminderData.notification_date,
 			});
-			setReminderDate(prefilledReminderData.notification_date);
+			setReminderDate(
+				format(
+					new Date(prefilledReminderData.notification_date),
+					"MM/dd/yyyy"
+				)
+			);
 			setFormData({
 				subject: prefilledReminderData.subject,
 				description: prefilledReminderData.description,
+				frequency_type: prefilledReminderData.frequency_type,
 			});
 		}
 	}, [prefilledReminderData]);
@@ -153,7 +163,7 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 			validate = false;
 			errorMessages.push("Description Is required");
 		}
-		if (!reminderData.frequency_type) {
+		if (!formData.frequency_type) {
 			validate = false;
 			errorMessages.push("Frequency Is required");
 		}
@@ -163,21 +173,18 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 	};
 	const handleSubmit = () => {
 		if (!validateSubmit()) {
-			console.log("not valid");
-
+			console.log(errors);
 			return;
 		}
 
-		if (
-			reminderData.frequency_type === "d" &&
-			reminderData.frequency <= 7
-		) {
+		if (formData.frequency_type === "d" && formData.frequency <= 7) {
 			console.log("minimum 7 days");
 			return;
 		}
+
 		let saveParameters = {
-			...formData,
 			...reminderData,
+			...formData,
 			notification_date: reminderDate,
 		};
 
@@ -187,56 +194,13 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 				id: prefilledReminderData.id,
 			};
 		}
+
 		onSave(saveParameters);
 	};
-	useEffect(() => {
-		const hasReminderData = Object.keys(reminderData).length > 0;
-
-		if (hasReminderData) {
-			let addSetting = { weeks: 1 };
-
-			if (reminderData.frequency_type === "w") {
-				addSetting = { weeks: reminderData.frequency };
-			}
-			if (reminderData.frequency_type === "d") {
-				addSetting = { days: reminderData.frequency };
-			}
-			if (reminderData.frequency_type === "m") {
-				addSetting = { months: reminderData.frequency };
-			}
-
-			if (reminderData.frequency_type === "y") {
-				addSetting = { years: reminderData.frequency };
-			}
-
-			let addDateObject = add(new Date(), addSetting);
-			if (reminderData.notification_date) {
-				let notificationDateObject = new Date(
-					reminderData.notification_date
-				);
-
-				setReminderDate(format(notificationDateObject, "MM/dd/yyyy"));
-				addDateObject = notificationDateObject;
-			}
-			if (!reminderData.notification_date) {
-				const calculatedNotificationDate = format(
-					addDateObject,
-					"MM/dd/yyyy"
-				);
-				setReminderDate(calculatedNotificationDate);
-			}
-			let nextDate = add(addDateObject, addSetting);
-			setNextReminderDate(format(nextDate, "MM/dd/yyyy"));
-		}
-	}, [reminderData]);
 
 	const onUserSelectDate = (formattedDate) => {
+		let dateObject = new Date("Y-m-d", formattedDate);
 		setReminderDate(formattedDate);
-		onFrequencyChange({
-			frequency: reminderData.frequency,
-			frequency_type: reminderData.frequency_type,
-			prefillDate: formattedDate,
-		});
 		setUserSetDate(true);
 	};
 
@@ -246,6 +210,7 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 		prefillDate = null,
 	}) => {
 		let currentReminderDate = prefillDate ? prefillDate : reminderDate;
+		let addDateObject = new Date();
 		if (!onUserSelectDate && !hasPrefilledData) {
 			let notificationDateObject = new Date();
 			if (reminderData.notification_date) {
@@ -258,11 +223,10 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 					notificationDateObject,
 					"MM/dd/yyyy"
 				);
+				addDateObject = notificationDateObject;
 			}
 		}
-		let addDateObject = currentReminderDate
-			? new Date(currentReminderDate)
-			: new Date();
+
 		let addSetting = { weeks: 1 };
 
 		if (frequency_type === "w") {
@@ -278,7 +242,11 @@ export const CreateEditSingle = ({ onSave, prefilledReminderData }) => {
 		if (frequency_type === "y") {
 			addSetting = { years: frequency };
 		}
-		console.log("supppp" + addDateObject);
+		setFormData({
+			...formData,
+			frequency: frequency,
+			frequency_type: frequency_type,
+		});
 		let nextDate = add(addDateObject, addSetting);
 		setNextReminderDate(format(nextDate, "MM/dd/yyyy"));
 	};
@@ -395,6 +363,7 @@ const ReminderOptions = ({ frequency_type, frequency, changeFrequency }) => {
 		};
 
 		setReminderInfo(updatedValue);
+		changeFrequency(updatedValue);
 	};
 	useEffect(() => {
 		if (frequency && frequency_type) {
@@ -418,7 +387,6 @@ const ReminderOptions = ({ frequency_type, frequency, changeFrequency }) => {
 				setValue("monthly");
 			}
 		}
-		changeFrequency(updatedFrequency);
 	}, [reminderInfo, changeFrequency]);
 
 	const setFrequencyTypeChange = (val) => {
@@ -429,6 +397,7 @@ const ReminderOptions = ({ frequency_type, frequency, changeFrequency }) => {
 				frequency: "1",
 			};
 			setReminderInfo(updatedValue);
+			changeFrequency(updatedValue);
 		}
 		if (val === "monthly") {
 			setCustom(false);
@@ -437,6 +406,7 @@ const ReminderOptions = ({ frequency_type, frequency, changeFrequency }) => {
 				frequency: "1",
 			};
 			setReminderInfo(updatedValue);
+			changeFrequency(updatedValue);
 		}
 
 		if (val === "custom") {
