@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { UserContext } from "../models/UserContext";
-const baseUrl = "http://192.168.5.129:3050/";
+import { REACT_APP_DEV_MODE, REACT_APP_PROD_MODE } from "@env";
+
+const baseUrl =
+  process.env.NODE_ENV == "development"
+    ? REACT_APP_DEV_MODE
+    : REACT_APP_PROD_MODE;
 
 interface SecureCallOptions {
   endPoint: string;

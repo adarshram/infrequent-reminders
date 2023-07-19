@@ -44,7 +44,6 @@ const App = () => {
     },
     authErrors: authErrors ? authErrors : [],
   };
-  console.log(theme);
   return (
     <SafeAreaProvider>
       <UserContext.Provider value={userContextObject}>
