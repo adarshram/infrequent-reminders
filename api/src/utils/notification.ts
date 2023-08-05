@@ -20,19 +20,20 @@ export const sendNotificationToMobileDevice = async (
 			body: notification.description,
 			notificationId: notification.id,
 		},
-		notification: {},
 	};
 
 	const notification_options = {
 		priority: 'high',
 		timeToLive: 60 * 60 * 24,
+		contentAvailable: true,
 	};
 	let success = false;
 	let errors = { unregistered: '', code: '' };
+
 	try {
 		let sendResults = await messsagingObject.sendToDevice(deviceKey, message, notification_options);
-		console.log(sendResults);
 		success = true;
+		console.log(sendResults.results[0].messageId);
 		return { success, errors };
 	} catch (err) {
 		console.log(err);

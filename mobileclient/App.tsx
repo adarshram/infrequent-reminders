@@ -8,6 +8,7 @@ import NotificationPage from "./pages/NotificationPage";
 import Login from "./pages/Login";
 import useFbaseAuthUser from "./hooks/useFbaseAuthUser";
 import { UserContext } from "./models/UserContext";
+
 import { Button, Text } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
@@ -16,18 +17,36 @@ import {
   Portal,
   Provider as PaperProvider,
 } from "react-native-paper";
+import notifee from "@notifee/react-native";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { Home } from "./components/Home";
+import { NotificationHandler } from "./components/HomeSections/NotificationHandler";
+import messaging from "@react-native-firebase/messaging";
+
 import { Appearance } from "react-native";
+
+import {
+  showNotification,
+  createChannel,
+  handleBackgroundEvent,
+} from "./functions/notifications";
 
 const theme = {
   ...DefaultTheme,
   mode: "adaptive",
   dark: Appearance.getColorScheme() === "dark",
 };
+messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  const channelData = await createChannel();
+  await showNotification(channelData, remoteMessage.data);
+});
+notifee.onBackgroundEvent(async (props) => {
+  await handleBackgroundEvent(props);
+});
+
 const App = () => {
   const [
     { googleSignin, signInWithEmailAndPassword, logOut: logOut },
@@ -44,21 +63,24 @@ const App = () => {
     },
     authErrors: authErrors ? authErrors : [],
   };
+
   return (
     <SafeAreaProvider>
       <UserContext.Provider value={userContextObject}>
-        {!loggedInUser ? (
-          <Login />
-        ) : (
-          <>
-            <PaperProvider theme={theme}>
-              <Portal>
-                <MainNavigation />
-                <Text>Already Logged In as {loggedInUser.email}</Text>
-              </Portal>
-            </PaperProvider>
-          </>
-        )}
+        <>
+          {!loggedInUser ? (
+            <Login />
+          ) : (
+            <>
+              <PaperProvider theme={theme}>
+                <Portal>
+                  <NotificationHandler />
+                  <MainNavigation />
+                </Portal>
+              </PaperProvider>
+            </>
+          )}
+        </>
       </UserContext.Provider>
     </SafeAreaProvider>
   );

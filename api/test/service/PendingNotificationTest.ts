@@ -6,6 +6,9 @@ import {
 	getFireStoreDbObject,
 	initializeFireBase,
 } from './../../src/utils/firebase';
+
+import { getVapidKeysForUser, getFirebaseIdForEmail } from './../../src/models/UserProfile';
+
 import { calculateSnoozeDate, calculateNextNotification } from './../../src/utils/dateManipulators';
 import {
 	deleteNotification,
@@ -20,6 +23,9 @@ import {
 	getNotificationInMonthForUser,
 	getNotificationsForUserByDate,
 } from './../../src/models/UserNotifications';
+
+import { UserNotifications } from './../../src/entity/UserNotifications';
+
 import {
 	createRecordFromNotification,
 	deleteNotificationLog,
@@ -38,11 +44,35 @@ import * as userVapidKeys from './../../src/models/UserVapidKeys';
 import * as notificationUtils from './../../src/utils/notification';
 
 //npm test test/service/PendingNotificationTest.ts -- --grep "gets users with notification"
-//npm test test/service/PendingNotificationTest.ts -- --grep "snooze last days notifications"
+//npm test test/service/PendingNotificationTest.ts -- --grep "sends notification per device"
 
 before(async () => {});
 
 describe('notification data handler', () => {
+	it('test once here', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
+		let pendingNotification = new PendingNotification();
+		console.log(pendingNotification);
+	});
+	it('seperate notification types', async () => {
+		await establishDatabaseConnection();
+		await initializeFireBase();
+		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
+
+		let notificationDevices = await userVapidKeys.getKeysForUser(validUserId);
+		console.log(notificationDevices);
+		//console.log(notificationDevices.devices);
+		if (
+			typeof notificationDevices[0].devices !== 'boolean' &&
+			notificationDevices[0].devices.length
+		) {
+			let mobileDevices = notificationDevices[0].devices.filter((v) => v.enabled && v.isMobile);
+			let browsers = notificationDevices[0].devices.filter(
+				(v) => v.enabled && !v.email && !v.isMobile,
+			);
+		}
+	}).timeout(10000);
 	it('gets users with notification', async () => {
 		await establishDatabaseConnection();
 		await initializeFireBase();
@@ -176,6 +206,7 @@ describe('notification data handler', () => {
 	it('sends notification for specific user yMwuesozlicC6FSSGCaYmhK1Y6r1', async () => {
 		await establishDatabaseConnection();
 		await initializeFireBase();
+
 		let validUserId = 'yMwuesozlicC6FSSGCaYmhK1Y6r1';
 
 		let pendingNotification = new PendingNotification();
@@ -195,7 +226,8 @@ describe('notification data handler', () => {
 	it('sends notification per device', async () => {
 		await establishDatabaseConnection();
 		await initializeFireBase();
-		let validUserId = '83zkNxe3BtSpXsFgxrDgw49ktWj2';
+		let validUserId = await getFirebaseIdForEmail('adarsh@tester1.com');
+
 		let previousDate = addDays(new Date(), -5);
 		let notificationParameters = {
 			user_id: validUserId,
@@ -206,6 +238,13 @@ describe('notification data handler', () => {
 			notification_date: previousDate,
 			is_active: true,
 		};
+
+		let existingNotification = await getRepository(UserNotifications).findOne({
+			where: { subject: notificationParameters.subject, user_id: validUserId },
+		});
+		if (existingNotification) {
+			await getRepository(UserNotifications).remove(existingNotification);
+		}
 
 		let notification = await createNotificationsForUser(notificationParameters);
 
@@ -233,7 +272,13 @@ describe('notification data handler', () => {
 		);
 
 		await deleteNotification(notification.id);
-	}).timeout(10000);
+		existingNotification = await getRepository(UserNotifications).findOne({
+			where: { subject: notificationParameters.subject, user_id: validUserId },
+		});
+		if (existingNotification) {
+			await getRepository(UserNotifications).remove(existingNotification);
+		}
+	}).timeout(50000);
 
 	it('sends notification to user and snooze it accordingly', async () => {
 		await establishDatabaseConnection();

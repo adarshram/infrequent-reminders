@@ -6,6 +6,7 @@ const baseUrl =
   process.env.NODE_ENV == "development"
     ? REACT_APP_DEV_MODE
     : REACT_APP_PROD_MODE;
+console.log(baseUrl);
 
 interface SecureCallOptions {
   endPoint: string;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { REACT_APP_DEV_MODE, REACT_APP_PROD_MODE } from "@env";
 
 import { Calendar, CalendarList, Agenda } from "react-native-calendars";
 import {
@@ -16,8 +17,9 @@ import { Button } from "react-native";
 import { format, add } from "date-fns";
 import useServerCall from "../hooks/useServerCall";
 import { ViewReminder } from "../components/HomeSections/ViewReminder";
-import { NotificationHandler } from "../components/HomeSections/NotificationHandler";
 import { useIsFocused } from "@react-navigation/native";
+
+import * as Notifications from "expo-notifications";
 
 export default function Home(props) {
 	const { navigation } = props;
@@ -32,7 +34,7 @@ export default function Home(props) {
 
 	const [
 		remindersForCurrentMonth,
-		,
+		fetchReminderLoading,
 		fetchRemindersForMonthErrors,
 		fetchRemindersForMonth,
 	] = useServerCall();
@@ -80,9 +82,7 @@ export default function Home(props) {
 		}
 	}, [isFocused]);
 
-	const subtractMonth = () => {
-		console.log("i come here!");
-	};
+	const subtractMonth = () => {};
 	const tomorrow = add(today, { days: 1 });
 
 	const addMonth = () => {};
@@ -90,11 +90,26 @@ export default function Home(props) {
 		const monthText = format(month, "MMMM - yyyy");
 		return <Text>{monthText}</Text>;
 	};
+	const getAllowed = async () => {
+		//POST_NOTIFICATIONS
+		try {
+			const { status: existingStatus } =
+				await Notifications.getPermissionsAsync();
+			if (existingStatus !== "granted") {
+				const { status } =
+					await Notifications.requestPermissionsAsync();
+				console.log("i come here");
+			}
+		} catch (e) {
+			console.log(e);
+		}
+	};
+	getAllowed();
 
 	return (
 		<>
-			<NotificationHandler />
 			<Calendar
+				displayLoadingIndicator={fetchReminderLoading}
 				// Initially visible month. Default = now
 				// Minimum date that can be selected, dates before minDate will be grayed out. Default = undefined
 				//minDate={format(firstCalendarDate, "yyyy-MM-dd")}

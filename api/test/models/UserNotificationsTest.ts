@@ -45,7 +45,7 @@ before(async () => {
 	await establishDatabaseConnection();
 });
 
-//npm test test/models/UserNotificationsTest.ts -- --grep "test todays notifications"
+//npm test test/models/UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -372,7 +372,6 @@ describe('save new reminder set', () => {
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	});
 
-	it('snoozes notifications depending on cron count', async () => {});
 	it('snoozes notifications depending on cron count', async () => {
 		let previousDate = addDays(new Date(), -5);
 
@@ -398,8 +397,13 @@ describe('save new reminder set', () => {
 			return userNotifications[0];
 		};
 
+		let firstCreatedNotification = await createNotificationsForUser(notificationParameters);
+		console.log(firstCreatedNotification);
+		let snoozeResult = await snoozeNotificationObject(firstCreatedNotification, true);
+		console.log(snoozeResult);
+
 		let createdNotification = await saveNotificationWithCount(notificationParameters, 5);
-		let snoozeResult = await snoozeNotificationObject(createdNotification, true);
+		snoozeResult = await snoozeNotificationObject(createdNotification, true);
 		//we shoud snooze around half a month as we have set 5
 		if (typeof snoozeResult !== 'boolean') {
 			expect(snoozeResult.days >= 14 && snoozeResult.days <= 18).to.equal(true);

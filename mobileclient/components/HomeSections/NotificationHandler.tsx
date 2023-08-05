@@ -14,15 +14,40 @@ import {
 import { format, add } from "date-fns";
 import useServerCall from "../../hooks/useServerCall";
 import { TextInput, Switch, Snackbar, HelperText } from "react-native-paper";
+import * as Notifications from "expo-notifications";
 
 import messaging from "@react-native-firebase/messaging";
-
+const getAllowed = async () => {
+   //POST_NOTIFICATIONS
+   let finalStatus = false;
+   try {
+      const { status: existingStatus } =
+         await Notifications.getPermissionsAsync();
+      finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+         const { status: existingStatus } =
+            await Notifications.requestPermissionsAsync();
+         finalStatus = existingStatus;
+      }
+      if (finalStatus !== "granted") {
+         //alert("Failed to get notification Permission");
+         return false;
+      }
+      return finalStatus === "granted";
+   } catch (e) {
+      console.log(e);
+      return false;
+   }
+   return finalStatus === "granted";
+};
 export const NotificationHandler = ({ navigation, date, refresh }) => {
    const [todaysReminders, setTodaysReminders] = useState([]);
    const [prevDate, setPrevDate] = useState(date ?? null);
    const [saveDevicesData, , , saveDevices] = useServerCall();
    const [fireBaseToken, setFireBaseToken] = useState(null);
    const [listOfDevices, setListOfDevices] = useState([]);
+   const [notificationAllowed, setNotificationAllowed] = useState(false);
+
    const [notificationListData, notificationListLoading, , deviceListCaller] =
       useServerCall();
 
@@ -59,6 +84,9 @@ export const NotificationHandler = ({ navigation, date, refresh }) => {
    useEffect(() => {
       let mount = true;
       const fetchToken = async () => {
+         const isNotificationAllowed = await getAllowed();
+
+         setNotificationAllowed(isNotificationAllowed);
          if (fireBaseToken === null) {
             let token = await getTokenFromFireBase();
             if (mount) {
@@ -66,6 +94,7 @@ export const NotificationHandler = ({ navigation, date, refresh }) => {
             }
          }
       };
+
       fetchToken();
       return () => {
          mount = false;
@@ -90,7 +119,9 @@ export const NotificationHandler = ({ navigation, date, refresh }) => {
          deviceListCaller.get("user/notificationDevices/list");
       }
    }, [saveDevicesData]);
-
+   if (!notificationAllowed) {
+      return <Text>Notification Not Allowed On Device</Text>;
+   }
    return (
       <>
          {listOfDevices.map((v, key) => (

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { format, add } from "date-fns";
 import useServerCall from "../../hooks/useServerCall";
+import { ServerCall } from "../../functions/serverCalls";
 import { ViewSingle } from "../../components/Reminder/ViewSingle";
 
 export const ViewReminder = ({ navigation, date, refresh }) => {
@@ -28,7 +29,7 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
    const [, , , deleteNotification] = useServerCall();
    const [snoozeData, , , snoozeNotification] = useServerCall();
    const [completeData, , , completeNotification] = useServerCall();
-
+   const serverCall = new ServerCall();
    if (date && remindersForDate === null && !remindersLoading) {
       fetchRemindersForDate.post("user/notifications/listByDate", {
          date: format(date, "yyyy-MM-dd"),
@@ -56,6 +57,11 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
    }
 
    const onSnooze = async (reminder) => {
+      const snoozeResult = await serverCall.get(
+         `direct/notifications/snooze/${reminder.id}/123121`
+      );
+      console.log(snoozeResult);
+      return;
       await snoozeNotification.get(`user/notifications/snooze/${reminder.id}`);
 
       fetchRemindersForDate.post("user/notifications/listByDate", {

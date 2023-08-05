@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { UserContext } from "../models/UserContext";
+import { ServerCall } from "../functions/serverCalls";
 import { REACT_APP_DEV_MODE, REACT_APP_PROD_MODE } from "@env";
-
 const baseUrl =
   process.env.NODE_ENV == "development"
     ? REACT_APP_DEV_MODE
     : REACT_APP_PROD_MODE;
-console.log(baseUrl);
 
 function useServerCall(initialUrl = false, initialData = null) {
   const [url, setUrl] = useState(initialUrl ?? false);
@@ -22,28 +21,31 @@ function useServerCall(initialUrl = false, initialData = null) {
     }
     setLoading(true);
     try {
+      const serverCall = new ServerCall();
       setData(null);
-      const options = {
-        method,
-        headers: new Headers({
-          Authorization: `Bearer ${user.accessToken}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        }),
-        body: body ? JSON.stringify(body) : null,
-      };
+      serverCall.setBearerHeader(user.accessToken);
       const requestUrl = `${baseUrl}${url}`;
-      const response = await fetch(requestUrl, options);
-
-      const responseData = await response.json();
-
-      setData(responseData);
-
-      if (!response.ok) {
-        throw new Error(responseData.message || "Something went wrong!");
+      if (method === "GET" || method === "get") {
+        const response = await serverCall.get(url);
+        if (!response) {
+          setData(false);
+          throw new Error("Something went wrong!");
+        }
+        const responseData = await response.json();
+        setData(responseData);
+      }
+      if (method === "POST" || method === "post") {
+        const response = await serverCall.post(url, body);
+        if (!response) {
+          setData(false);
+          throw new Error("Something went wrong!");
+        }
+        const responseData = await response.json();
+        setData(responseData);
       }
     } catch (error) {
       setError(error.message);
+      console.log(error);
       setData(false);
     } finally {
       setLoading(false);

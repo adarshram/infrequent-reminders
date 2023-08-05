@@ -1,10 +1,5 @@
 import { getRepository, getManager } from 'typeorm';
-import {
-  getById,
-  deleteById,
-  deleteByColumn,
-  whereByColumns,
-} from './../../src/models/genericModel';
+
 import { UserNotifications } from './../../src/entity/UserNotifications';
 import { NotificationSet } from './../../src/entity/NotificationSet';
 import { UserNotificationPreference } from './../../src/entity/UserNotificationPreference';
@@ -47,7 +42,7 @@ import { expect } from 'chai';
 import 'mocha';
 import { createConnection } from 'typeorm';
 import { getTime } from 'date-fns';
-//npm test test\scripts\dailyUpdatesTest.ts -- --grep "runs the daily cron"
+//npm test test/scripts/dailyUpdatesTest.ts -- --grep "runs the daily cron"
 //npm test test\scripts\dailyUpdatesTest.ts -- --grep "sends the user email"
 
 before(async () => {

@@ -5,7 +5,7 @@ npx react-native run-android <-- rebuids the app with native dependencies .
 npx eas-cli build --profile development --platform android <--Android build
 npx react-native run-android -- --mode="release"
 
-ENVFILE=.env.production && npx react-native build-android --mode=release <--for building android
+npx react-native build-android --mode=release <--for building android
 
 cd android && ./gradlew signingReport
 

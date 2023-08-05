@@ -58,25 +58,40 @@ export class PendingNotification {
 			let emailDevices = userKeys[0].devices.filter(
 				(currentDevice) => currentDevice.isEmail === true,
 			);
-
-			let deviceNotification = await this.handleVapidKeyNotificationForUser(
-				notifications,
-				user_id,
-				notificationDevices,
+			let mobileDevices = userKeys[0].devices.filter((v) => v.enabled && v.isMobile);
+			let browserDevices = userKeys[0].devices.filter(
+				(v) => v.enabled && !v.isEmail && !v.isMobile,
 			);
+			browserDevices = [];
+			let deviceNotification = false;
+			if (browserDevices.length > 0) {
+				deviceNotification = await this.handleVapidKeyNotificationForUser(
+					notifications,
+					user_id,
+					browserDevices,
+				);
+			}
+			if (mobileDevices.length > 0) {
+				console.log(mobileDevices);
+				deviceNotification = await this.handleVapidKeyNotificationForUser(
+					notifications,
+					user_id,
+					mobileDevices,
+				);
+			}
+
 			await this.updateLogWithSendType(
 				notifications,
 				deviceNotification ? 'Device Notification' : 'Device Notification Failed',
 			);
-			let emailNotification = await this.sendEmailNotifications(
-				notifications,
-				user_id,
-				emailDevices,
-			);
-			await this.updateLogWithSendType(
-				notifications,
-				emailNotification ? 'Email Notification' : 'Email Notification Failed',
-			);
+			let emailNotification = false;
+			if (emailDevices.length) {
+				emailNotification = await this.sendEmailNotifications(notifications, user_id, emailDevices);
+				await this.updateLogWithSendType(
+					notifications,
+					emailNotification ? 'Email Notification' : 'Email Notification Failed',
+				);
+			}
 			sentNotification = deviceNotification || emailNotification;
 		}
 		if (sentNotification) {
@@ -109,6 +124,7 @@ export class PendingNotification {
 		await Promise.all(
 			pending.map(async (current) => {
 				let { success, errors } = await sendNotificationToMobileDevice(deviceKey, current);
+				isSuccess = true;
 				if (!success) {
 					isSuccess = false;
 					errorMessages = errors;
@@ -161,6 +177,7 @@ export class PendingNotification {
 								pending,
 								device.vapidKey,
 							);
+
 							return await handleSuccessOrFailure(success, errors, device);
 						}
 					}

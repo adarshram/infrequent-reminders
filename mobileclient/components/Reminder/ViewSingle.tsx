@@ -15,6 +15,7 @@ import { MaterialIcons } from "react-native-vector-icons";
 export const ViewSingle = (props) => {
 	let { reminder, onEdit, onSnooze, onComplete, onDelete, onView } = props;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
+
 	const getFrequencyText = () => {
 		let text;
 		if (reminder.frequency_type === "w") {
@@ -94,6 +95,7 @@ const ExtraOptions = ({ onEdit, onSnooze, onComplete, onDelete, onView }) => {
 				onPress={() => onEdit()}
 				onLongPress={() => onView()}
 			></Button>
+
 			<Button
 				icon={() => <MaterialIcons name="snooze" />}
 				mode="Outlined"
