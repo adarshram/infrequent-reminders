@@ -16,6 +16,8 @@ import { Button } from "react-native";
 
 import { format, add } from "date-fns";
 import useServerCall from "../hooks/useServerCall";
+import useOnAppForeground from "../hooks/useOnAppForeground";
+
 import { ViewReminder } from "../components/HomeSections/ViewReminder";
 import { useIsFocused } from "@react-navigation/native";
 
@@ -31,13 +33,13 @@ export default function Home(props) {
 	const [currentMonth, setCurrentMonth] = useState(today);
 	const [markedDates, setMarkedDates] = useState({});
 	const [selectedDate, setSelectedDate] = useState<Date | bool>(false);
-
 	const [
 		remindersForCurrentMonth,
 		fetchReminderLoading,
 		fetchRemindersForMonthErrors,
 		fetchRemindersForMonth,
 	] = useServerCall();
+	const [hasRefreshed, currentState] = useOnAppForeground();
 
 	useEffect(() => {
 		setMarkedDates({});
@@ -45,7 +47,6 @@ export default function Home(props) {
 			fetchRemindersForMonth.post(`user/notifications/fullMonth`, {
 				month: format(currentMonth, "yyyy-MM"),
 			});
-			//getTokenFromFireBase();
 		}
 	}, [currentMonth]);
 	useEffect(() => {
@@ -56,14 +57,13 @@ export default function Home(props) {
 			remindersForCurrentMonth.data.forEach((currentData) => {
 				let formattedDate = format(
 					new Date(currentData.notification_date),
-					"yyyy-MM-dd"
+					"yyyy-MM-dd",
 				);
 				datesToMark = {
 					...datesToMark,
 					[formattedDate]: markAttributes,
 				};
 			});
-
 			setMarkedDates(datesToMark);
 		}
 	}, [remindersForCurrentMonth]);
@@ -73,6 +73,13 @@ export default function Home(props) {
 			month: format(currentMonth, "yyyy-MM"),
 		});
 	};
+	useEffect(() => {
+		if (hasRefreshed) {
+			fetchRemindersForMonth.post(`user/notifications/fullMonth`, {
+				month: format(currentMonth, "yyyy-MM"),
+			});
+		}
+	}, [hasRefreshed]);
 
 	useEffect(() => {
 		if (isFocused) {
@@ -98,7 +105,6 @@ export default function Home(props) {
 			if (existingStatus !== "granted") {
 				const { status } =
 					await Notifications.requestPermissionsAsync();
-				console.log("i come here");
 			}
 		} catch (e) {
 			console.log(e);

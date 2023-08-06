@@ -3,7 +3,6 @@ after installation generate sha keys and add it to google and then come back and
 npx expo prebuild --clean <--This cleans out whatever is in build gradle etc
 npx react-native run-android <-- rebuids the app with native dependencies .
 npx eas-cli build --profile development --platform android <--Android build
-npx react-native run-android -- --mode="release"
 
 npx react-native build-android --mode=release <--for building android
 
@@ -16,7 +15,6 @@ emulator -list-avds
 for restarting the emulator fresh
 emulator @Pixel_6_Pro_API_33 -wipe-data
 for just starting the emulator
-emulator @Pixel_6_Pro_API_33
-
+ 	
 psql -h localhost -p 5432 -d infrequent_scheduler -U adarshram -W
 Api Live url : https://infrequent-scheduler-api-mjw7y7re7q-uc.a.run.app/
