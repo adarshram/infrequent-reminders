@@ -1,0 +1,19 @@
+{
+  "Simulator Target Bundle": "com.infrequentscheduler.remindertest",
+  "aps": {
+    "badge": 1,
+    "alert": {
+      "title": "Test Push",
+      "body": "Success! Push notification in simulator! 🎉",
+      "sound": "default"
+    },
+    "notification":{
+        "title": "Test Push",
+        "body": "Success! Push notification in simulator! 🎉",
+    },
+    "data":{},
+  },
+
+  "gcm.message_id": "123",
+  "example-data-key": "example-data-value"
+}

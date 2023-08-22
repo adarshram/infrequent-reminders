@@ -57,7 +57,7 @@ export default function Home(props) {
 			remindersForCurrentMonth.data.forEach((currentData) => {
 				let formattedDate = format(
 					new Date(currentData.notification_date),
-					"yyyy-MM-dd",
+					"yyyy-MM-dd"
 				);
 				datesToMark = {
 					...datesToMark,

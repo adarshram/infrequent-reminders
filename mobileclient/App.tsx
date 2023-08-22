@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView, Platform } from "react-native";
 import { LoginForm } from "./components/LoginForm";
 import MainNavigation from "./components/MainNavigation";
 
@@ -39,11 +39,12 @@ const theme = {
   mode: "adaptive",
   dark: Appearance.getColorScheme() === "dark",
 };
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-  const channelData = await createChannel();
-  await showNotification(channelData, remoteMessage.data);
-});
+const requestSettings = async () => {
+  const requestedSettings = await notifee.requestPermission();
+};
+
 notifee.onBackgroundEvent(async (props) => {
+  console.log("background");
   await handleBackgroundEvent(props);
 });
 
@@ -64,6 +65,9 @@ const App = () => {
     authErrors: authErrors ? authErrors : [],
   };
 
+  if (loggedInUser === null) {
+    return <Text>loading</Text>;
+  }
   return (
     <SafeAreaProvider>
       <UserContext.Provider value={userContextObject}>

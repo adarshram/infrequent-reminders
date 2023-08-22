@@ -48,6 +48,7 @@ function RecieveNotifications({ navigation }) {
 
       try {
         messaging().onMessage(async (remoteMessage) => {
+          console.log("onmessage");
           navigation.navigate("CreateEditSingleReminder");
         });
 

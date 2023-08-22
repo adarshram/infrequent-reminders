@@ -73,8 +73,15 @@ export const NotificationHandler = ({ navigation, date, refresh }) => {
                name: "Mobile App",
                vapidKey: fireBaseToken,
                isMobile: true,
-               isAndroid: true,
+               isIos: false,
+               isAndroid: false,
             };
+            if (Platform.OS === "ios") {
+               currentDevice = { ...currentDevice, isIos: true };
+            }
+            if (Platform.OS === "android") {
+               currentDevice = { ...currentDevice, isAndroid: true };
+            }
             devices.push(currentDevice);
          }
          setListOfDevices(devices);
@@ -106,9 +113,20 @@ export const NotificationHandler = ({ navigation, date, refresh }) => {
          const isCurrentDevice = current.vapidKey === deviceData.vapidKey;
          if (isCurrentDevice) {
             current.enabled = enabled;
+            current.isMobile = true;
+            if (Platform.OS === "ios") {
+               current.isIos = true;
+               current.isAndroid = false;
+            }
+            if (Platform.OS === "android") {
+               current.isIos = false;
+               current.isAndroid = true;
+            }
          }
+
          return current;
       });
+
       await saveDevices.post("user/notificationDevices/saveDevices", {
          deviceList: updatedListOfDevices,
       });

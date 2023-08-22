@@ -5,7 +5,7 @@ import auth from "@react-native-firebase/auth";
 
 const useFbaseAuthUser = () => {
   //const currentUser = auth().currentUser;
-  const [user, setUser] = useState(false);
+  const [user, setUser] = useState(null);
   const [errors, setErrors] = useState([]);
   useEffect(() => {
     GoogleSignin.configure({
@@ -15,6 +15,10 @@ const useFbaseAuthUser = () => {
         "9005250937-7ni9k3og63ce5hukrmrd65h47f71qdu4.apps.googleusercontent.com",
     });
     const onAuthStateChanged = async (authUser) => {
+      if (!auth().currentUser) {
+        setUser(false);
+        return;
+      }
       const idTokenResult = await auth().currentUser.getIdTokenResult();
       let userWithToken = await auth().currentUser;
       userWithToken.accessToken = idTokenResult.token;
