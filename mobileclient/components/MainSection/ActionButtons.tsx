@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { FAB, Portal, Provider } from "react-native-paper";
-
+//https://pictogrammers.com/library/mdi/
+/*
+{
+               icon: "paw",
+               onPress: () => {
+                  navigation.navigate("tbd");
+               },
+            },
+*/
 export const ActionButtons = ({ navigation }) => {
    const [state, setState] = useState({ open: false });
 
@@ -18,7 +26,7 @@ export const ActionButtons = ({ navigation }) => {
             {
                icon: "plus",
                onPress: () => {
-                  navigation.navigate("CreateEditSingleReminder");
+                  navigation.navigate("SingleReminder");
                },
             },
          ]}

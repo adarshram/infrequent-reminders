@@ -15,6 +15,10 @@ emulator -list-avds
 for restarting the emulator fresh
 emulator @Pixel_6_Pro_API_33 -wipe-data
 for just starting the emulator
- 	
 psql -h localhost -p 5432 -d infrequent_scheduler -U adarshram -W
 Api Live url : https://infrequent-scheduler-api-mjw7y7re7q-uc.a.run.app/
+
+for ios :
+npm run ios
+to build
+npx react-native run-ios

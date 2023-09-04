@@ -16,7 +16,7 @@ export const ViewListNotifications = ({
 	const [completeData, , , completeNotification] = useServerCall();
 
 	const onEdit = (reminder) => {
-		navigation.navigate("CreateEditSingleReminder", {
+		navigation.navigate("SingleReminder", {
 			reminderId: reminder.id,
 		});
 	};

@@ -19,6 +19,7 @@ import useServerCall from "../hooks/useServerCall";
 import useOnAppForeground from "../hooks/useOnAppForeground";
 
 import { ViewReminder } from "../components/HomeSections/ViewReminder";
+
 import { useIsFocused } from "@react-navigation/native";
 
 import * as Notifications from "expo-notifications";
@@ -159,11 +160,13 @@ export default function Home(props) {
 				enableSwipeMonths={true}
 			/>
 			{selectedDate !== false && (
-				<ViewReminder
-					date={selectedDate}
-					refresh={() => refreshMonth()}
-					{...props}
-				/>
+				<>
+					<ViewReminder
+						date={selectedDate}
+						refresh={() => refreshMonth()}
+						{...props}
+					/>
+				</>
 			)}
 		</>
 	);

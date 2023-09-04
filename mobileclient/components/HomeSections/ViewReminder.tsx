@@ -15,8 +15,10 @@ import { format, add } from "date-fns";
 import useServerCall from "../../hooks/useServerCall";
 import { ServerCall } from "../../functions/serverCalls";
 import { ViewSingle } from "../../components/Reminder/ViewSingle";
+import AddNewReminder from "../../components/HomeSections/AddNewReminder";
 
-export const ViewReminder = ({ navigation, date, refresh }) => {
+export const ViewReminder = (props) => {
+   const { navigation, date, refresh } = props;
    const [todaysReminders, setTodaysReminders] = useState([]);
    const [prevDate, setPrevDate] = useState(date ?? null);
    const [
@@ -60,9 +62,6 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
       const snoozeResult = await serverCall.get(
          `direct/notifications/snooze/${reminder.id}/123121`
       );
-      console.log(snoozeResult);
-      return;
-      await snoozeNotification.get(`user/notifications/snooze/${reminder.id}`);
 
       fetchRemindersForDate.post("user/notifications/listByDate", {
          date: format(date, "yyyy-MM-dd"),
@@ -90,12 +89,21 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
          date: format(date, "yyyy-MM-dd"),
       });
    };
+
+   const onAddClick = () => {
+      navigation.navigate("SingleReminder", {
+         prefilledDate: format(date, "yyyy-MM-dd"),
+      });
+   };
+
+   //<AddNewReminder date={selectedDate} />
    return (
       <>
-         <Text>View Reminders for {format(date, "MM/dd/yyyy")}</Text>
+         <AddNewReminder date={date} onAdd={() => onAddClick()} />
+
          <SafeAreaView
             style={{
-               flex: 1,
+               flex: 0,
                marginTop: 0,
             }}
          >
@@ -108,7 +116,7 @@ export const ViewReminder = ({ navigation, date, refresh }) => {
                      onComplete={(reminder) => onComplete(reminder)}
                      onDelete={(reminder) => onDelete(reminder)}
                      onEdit={(reminder) => {
-                        navigation.navigate("CreateEditSingleReminder", {
+                        navigation.navigate("SingleReminder", {
                            reminderId: reminder.id,
                         });
                      }}

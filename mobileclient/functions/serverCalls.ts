@@ -5,7 +5,6 @@ const baseUrl =
 		? REACT_APP_DEV_MODE
 		: REACT_APP_PROD_MODE;
 
-console.log(baseUrl);
 export class ServerCall {
 	bearer: string = "";
 	setBearerHeader = (bearer: string) => {

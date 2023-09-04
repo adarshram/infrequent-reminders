@@ -58,10 +58,10 @@ function useServerCall(initialUrl = false, initialData = null) {
 
   const requester = {
     get: async (url) => {
-      await sendRequest(url, "GET");
+      return await sendRequest(url, "GET");
     },
     post: async (url, body) => {
-      await sendRequest(url, "POST", body);
+      return await sendRequest(url, "POST", body);
     },
   };
 

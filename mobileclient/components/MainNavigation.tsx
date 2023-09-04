@@ -4,6 +4,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BottomNavigation from "./BottomNavigation";
 import { CreateEditSingleReminder } from "../pages/CreateEditSingleReminder";
+import { SingleReminder } from "../pages/SingleReminder";
+
 import { ViewReminderDetails } from "../pages/ViewReminderDetails";
 
 const Stack = createNativeStackNavigator();
@@ -17,10 +19,7 @@ function MainNavigation() {
           component={BottomNavigation}
           options={{ headerShown: false }}
         />
-        <Stack.Screen
-          name="CreateEditSingleReminder"
-          component={CreateEditSingleReminder}
-        />
+        <Stack.Screen name="SingleReminder" component={SingleReminder} />
         <Stack.Screen
           name="ViewReminderDetails"
           title="View Reminder Details"
