@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
 const calculateNextDate = (
 	currentDateObject: Date,
 	frequency: number,
-	frequencyType: string
+	frequencyType: string,
 ): Date => {
 	interface addSettingType {
 		weeks?: number;
@@ -95,7 +95,7 @@ const ReminderForm = ({ onSave, onCancel, serverErrors, prefillData }) => {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [errors, setErrors] = useState([]);
 	const [nextDate, setNextDate] = useState(
-		calculateNextDate(currentDate, frequency, frequencyType)
+		calculateNextDate(currentDate, frequency, frequencyType),
 	);
 
 	useEffect(() => {
@@ -117,13 +117,13 @@ const ReminderForm = ({ onSave, onCancel, serverErrors, prefillData }) => {
 			setFrequencyType(p.frequencyType);
 		}
 		setNextDate(
-			calculateNextDate(currentDate, p.frequency, p.frequencyType)
+			calculateNextDate(currentDate, p.frequency, p.frequencyType),
 		);
 	};
 	const onUserSelectDate = (currentDateObject: Date) => {
 		setCurrentDate(new Date(currentDateObject));
 		setNextDate(
-			calculateNextDate(currentDateObject, frequency, frequencyType)
+			calculateNextDate(currentDateObject, frequency, frequencyType),
 		);
 	};
 	const validateAndSave = (): bool => {

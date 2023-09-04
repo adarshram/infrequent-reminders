@@ -19,7 +19,11 @@ function MainNavigation() {
           component={BottomNavigation}
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="SingleReminder" component={SingleReminder} />
+        <Stack.Screen
+          name="SingleReminder"
+          component={SingleReminder}
+          options={{ title: "Create Reminder" }}
+        />
         <Stack.Screen
           name="ViewReminderDetails"
           title="View Reminder Details"

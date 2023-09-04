@@ -23,12 +23,10 @@ export const SingleReminder = ({ navigation, route }) => {
 		id: false,
 	});
 	const { user } = signedInUser;
-	console.log(route.params);
 	const hasReminderId = route.params?.reminderId ? true : false;
 	const prefilledDate = route.params?.prefilledDate
 		? route.params.prefilledDate
 		: "";
-	console.log(prefilledDate);
 	const hasPrefilledDate = prefilledDate !== "";
 
 	useEffect(() => {
@@ -53,6 +51,7 @@ export const SingleReminder = ({ navigation, route }) => {
 
 	useEffect(() => {
 		if (serverReminderData?.data) {
+			navigation.setOptions({ title: "Edit Reminder" });
 			setReminderData(serverReminderData.data);
 		}
 		if (!serverReminderData) {
@@ -63,7 +62,7 @@ export const SingleReminder = ({ navigation, route }) => {
 				};
 			});
 		}
-	}, [serverReminderData]);
+	}, [serverReminderData, navigation]);
 	const saveSchedule = async (saveBody: SaveReminder) => {
 		if (hasReminderId) {
 			saveBody = {
@@ -74,7 +73,6 @@ export const SingleReminder = ({ navigation, route }) => {
 		await saveRequest.post("user/notifications/save", saveBody);
 		navigation.goBack({ name: "Home" });
 	};
-	console.log(reminderData);
 	return (
 		<>
 			<Text>{user.email}</Text>
@@ -85,6 +83,7 @@ export const SingleReminder = ({ navigation, route }) => {
 						? reminderData
 						: false
 				}
+				onCancel={() => navigation.goBack({ name: "Home" })}
 			/>
 		</>
 	);

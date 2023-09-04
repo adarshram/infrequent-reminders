@@ -196,7 +196,7 @@ const InputData = ({
 		<>
 			<Surface
 				style={{
-					flexDirection: "row",
+					flexDirection: "column",
 					marginBottom: 20,
 				}}
 				elevation="0"
@@ -210,7 +210,6 @@ const InputData = ({
 						marginRight: 5,
 						minWidth: 70,
 					}}
-					elevation="0"
 				>
 					<TextInput
 						label="Frequency"
@@ -221,7 +220,32 @@ const InputData = ({
 						onChangeText={(text) => setLocalFrequency(text)}
 					/>
 				</View>
-				<NativeSingleSelect
+				<View style={{ flexDirection: "row", padding: 4 }}>
+					<RadioButton.Group
+						onValueChange={(newValue) =>
+							setLocalFrequencyType(newValue)
+						}
+						value={localFrequencyType}
+					>
+						<View>
+							<Text>Days</Text>
+							<RadioButton value="d" />
+						</View>
+						<View>
+							<Text>Months</Text>
+							<RadioButton value="m" />
+						</View>
+						<View>
+							<Text>Weeks</Text>
+							<RadioButton value="w" />
+						</View>
+						<View>
+							<Text>Years</Text>
+							<RadioButton value="y" />
+						</View>
+					</RadioButton.Group>
+				</View>
+				{/*<NativeSingleSelect
 					items={[
 						{
 							value: "d",
@@ -241,13 +265,13 @@ const InputData = ({
 						},
 					]}
 					selectedValue={localFrequencyType}
-					onSelect={(v) => setLocalFrequencyType(v)}
+					onSelect={(v) => console.log(v)}
 					extraStyle={{ marginTop: 6 }}
 					iconStyles={{
 						top: 16,
 						right: 12,
 					}}
-				/>
+				/>*/}
 			</Surface>
 		</>
 	);
