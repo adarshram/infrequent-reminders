@@ -22,7 +22,6 @@ import { registerRootComponent } from "expo";
 
 messaging().setBackgroundMessageHandler(async (remoteMessage) => {
 	const channelData = await createChannel();
-	const requestedSettings = await requestSettings();
 	await showNotification(channelData, remoteMessage.data);
 });
 
@@ -31,8 +30,9 @@ function HeadlessCheck({ isHeadless }) {
 		// App has been launched in the background by iOS, ignore
 		return null;
 	}
-
+	console.log("sup");
 	return <App />;
 }
+AppRegistry.registerComponent("App", () => HeadlessCheck);
 
-registerRootComponent(HeadlessCheck);
+registerRootComponent(App);

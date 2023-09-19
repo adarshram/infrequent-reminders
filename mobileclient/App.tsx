@@ -39,12 +39,8 @@ const theme = {
   mode: "adaptive",
   dark: Appearance.getColorScheme() === "dark",
 };
-const requestSettings = async () => {
-  const requestedSettings = await notifee.requestPermission();
-};
 
 notifee.onBackgroundEvent(async (props) => {
-  console.log("background");
   await handleBackgroundEvent(props);
 });
 
