@@ -45,7 +45,7 @@ before(async () => {
 	await establishDatabaseConnection();
 });
 
-//npm test test/models/UserNotificationsTest.ts -- --grep "snooze notification"
+//npm test test/models/UserNotificationsTest.ts -- --grep 'marks single notification as done'
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -176,15 +176,15 @@ describe('save new reminder set', () => {
 		}
 	});
 
-	xit('marks single notification as done', async () => {
+	it('marks single notification as done', async () => {
 		let previousDate = addDays(new Date(), 5);
 
 		let notificationParameters = {
 			user_id: '123',
 			subject: '12312312',
 			description: 'scdsacsac',
-			frequency_type: 'w',
-			frequency: 1,
+			frequency_type: 'd',
+			frequency: 45,
 			notification_date: previousDate,
 			is_active: true,
 		};
@@ -194,12 +194,9 @@ describe('save new reminder set', () => {
 
 		await completeNotification(notification.id, notification.user_id);
 		let updatedNotification = await getNotificationById(notification.id, notification.user_id);
-		let difference = differenceInCalendarDays(
-			updatedNotification.notification_date,
-			notification.notification_date,
-		);
+		let difference = differenceInCalendarDays(updatedNotification.notification_date, new Date());
 
-		expect(difference).to.be.equal(7);
+		expect(difference).to.be.equal(45);
 
 		let metaObject = new MetaNotificationsClass();
 		let metaObjectData = await metaObject.getDataByNotificationId(notification.id);

@@ -75,6 +75,9 @@ export const calculateNextNotification = (
   if (frequencyType == 'w') {
     nextNotificationDate = addWeeks(inputDate, frequency);
   }
+  if (frequencyType == 'd') {
+    nextNotificationDate = addDays(inputDate, frequency);
+  }
 
   let daysToNextNotification = differenceInCalendarDays(nextNotificationDate, inputDate);
   return {
