@@ -70,6 +70,7 @@ export const attachPrivateRoutes = (app: any) => {
   //Direct Routes
   app.get(`/direct/notifications/snooze/:id/:uniqueId`, directController.snoozeNotifications);
   app.get(`/direct/notifications/complete/:id/:uniqueId`, directController.complete);
+  app.get(`/direct/tester`, directController.testerEndpt);
 };
 
 export const handleRoute = async (req: Request, res: Response, routeFunction: any) => {

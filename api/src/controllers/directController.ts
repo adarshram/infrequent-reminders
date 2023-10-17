@@ -60,3 +60,9 @@ export const complete = async (req: Request, res: Response) => {
   errorResponse(res, 'Unable to complete');
   return false;
 };
+export const testerEndpt = async (req: Request, res: Response) => {
+  const params = req.params;
+  console.log(params);
+  let completeResult = { success: true };
+  successResponse(res, completeResult);
+};

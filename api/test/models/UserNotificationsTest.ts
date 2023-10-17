@@ -45,7 +45,7 @@ before(async () => {
 	await establishDatabaseConnection();
 });
 
-//npm test test/models/UserNotificationsTest.ts -- --grep "snoozes notifications depending on cron count"
+//npm test test/models/UserNotificationsTest.ts -- --grep "snooze notification"
 
 describe('save new reminder set', () => {
 	let reminderData = {
@@ -514,12 +514,16 @@ describe('save new reminder set', () => {
 		});
 		notifications.push(createdNotification);
 
-		createdNotification = await createNotificationsForUser({
+		const longDaysNotification = {
 			...notificationParameters,
+			frequency_type: 'd',
+			frequency: 46,
 			notification_date: addDays(new Date(), -20),
-		});
-		notifications.push(createdNotification);
+		};
+		createdNotification = await createNotificationsForUser(longDaysNotification);
+		const longDaysId = createdNotification.id;
 
+		notifications.push(createdNotification);
 		let pendingNotifications = await getPendingNotifications(notificationParameters.user_id);
 
 		let results = await Promise.all(
@@ -533,9 +537,12 @@ describe('save new reminder set', () => {
 		expect(getUnixTime(results[0].notification_date)).to.equal(
 			getUnixTime(results[1].notification_date),
 		);
-		expect(getUnixTime(results[1].notification_date)).to.equal(
-			getUnixTime(results[2].notification_date),
-		);
+		results.map((currentNotification) => {
+			if (longDaysId === currentNotification.id) {
+				let diffDays = differenceInCalendarDays(currentNotification.notification_date, new Date());
+				expect(diffDays).to.be.greaterThan(4);
+			}
+		});
 
 		await deleteNotificationsForUser(notificationParameters.user_id);
 	}).timeout(10000);

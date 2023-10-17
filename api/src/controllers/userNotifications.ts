@@ -26,6 +26,7 @@ export const list = async (req: Request, res: Response) => {
 export const listNotificationsForMonth = async (req: Request, res: Response) => {
   const fBaseUser = res.locals.user;
   const { month } = req.body;
+
   let results = await getNotificationInMonthForUser(fBaseUser.uid, month);
   successResponse(res, results);
 };
