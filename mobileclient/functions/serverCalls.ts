@@ -4,7 +4,7 @@ const baseUrl =
 	process.env.NODE_ENV == "development"
 		? REACT_APP_DEV_MODE
 		: REACT_APP_PROD_MODE;
-
+console.log(baseUrl);
 export class ServerCall {
 	bearer: string = "";
 	setBearerHeader = (bearer: string) => {
@@ -15,6 +15,8 @@ export class ServerCall {
 	};
 	get = async (endPoint: string) => {
 		let endPointUrl = baseUrl + endPoint;
+		console.log(endPointUrl);
+
 		const fetchOptions = {
 			method: "GET",
 			headers: new Headers({
@@ -55,6 +57,7 @@ export class ServerCall {
 			if (!callResults.ok) {
 				throw new Error("failed");
 			}
+
 			return callResults;
 		} catch (e) {
 			console.log(`${endPoint} failed`);

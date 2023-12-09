@@ -3,8 +3,9 @@ import { View, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BottomNavigation from "./BottomNavigation";
-import { CreateEditSingleReminder } from "../pages/CreateEditSingleReminder";
 import { SingleReminder } from "../pages/SingleReminder";
+import { ListReminderSet } from "../pages/ListReminderSet";
+import { SingleReminderSet } from "../pages/SingleReminderSet";
 
 import { ViewReminderDetails } from "../pages/ViewReminderDetails";
 
@@ -28,6 +29,17 @@ function MainNavigation() {
           name="ViewReminderDetails"
           title="View Reminder Details"
           component={ViewReminderDetails}
+        />
+
+        <Stack.Screen
+          name="ListReminderSet"
+          options={{ title: "Reminder Sets" }}
+          component={ListReminderSet}
+        />
+        <Stack.Screen
+          name="SingleReminderSet"
+          options={{ title: "View/Edit Reminder Sets" }}
+          component={SingleReminderSet}
         />
       </Stack.Navigator>
     </NavigationContainer>

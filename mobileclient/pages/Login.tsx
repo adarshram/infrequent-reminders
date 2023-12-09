@@ -53,7 +53,6 @@ export default function Login() {
             )}
             {!user && (
                 <>
-                    <Text>Login Page</Text>
                     <Card>
                         <Card.Title title="Login With Email" subtitle="" />
                         <Card.Content>

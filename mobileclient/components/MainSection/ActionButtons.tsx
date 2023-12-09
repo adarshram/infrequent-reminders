@@ -1,14 +1,5 @@
 import React, { useState } from "react";
 import { FAB, Portal, Provider } from "react-native-paper";
-//https://pictogrammers.com/library/mdi/
-/*
-{
-               icon: "paw",
-               onPress: () => {
-                  navigation.navigate("tbd");
-               },
-            },
-*/
 export const ActionButtons = ({ navigation }) => {
    const [state, setState] = useState({ open: false });
 
@@ -24,9 +15,17 @@ export const ActionButtons = ({ navigation }) => {
          icon={open ? "calendar-today" : "plus"}
          actions={[
             {
-               icon: "plus",
+               icon: "reminder",
+               label: "Reminder",
                onPress: () => {
                   navigation.navigate("SingleReminder");
+               },
+            },
+            {
+               icon: "group",
+               label: "Reminder Sets",
+               onPress: () => {
+                  navigation.navigate("ListReminderSet");
                },
             },
          ]}

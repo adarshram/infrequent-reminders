@@ -6,7 +6,6 @@ const baseUrl =
   process.env.NODE_ENV == "development"
     ? REACT_APP_DEV_MODE
     : REACT_APP_PROD_MODE;
-console.log(baseUrl);
 
 interface SecureCallOptions {
   endPoint: string;
@@ -54,7 +53,7 @@ const fetchCallData = async (user, callOptions, callBody) => {
 const useSecureCall = (callOptions: SecureCallOptions, callNow?: bool) => {
   const signedInUser = useContext(UserContext);
   const [fetchNow, setFetchNow] = useState<bool>(
-    callNow === false ? false : true
+    callNow === false ? false : true,
   );
   const { user } = signedInUser;
 
@@ -68,7 +67,7 @@ const useSecureCall = (callOptions: SecureCallOptions, callNow?: bool) => {
       let [success, callResults, error] = await fetchCallData(
         user,
         callOptions,
-        callBody
+        callBody,
       );
       if (success) {
         setResults(callResults);
@@ -91,7 +90,7 @@ const useSecureCall = (callOptions: SecureCallOptions, callNow?: bool) => {
       let [success, callResults, error] = await fetchCallData(
         user,
         callOptions,
-        body
+        body,
       );
       if (success) {
         setResults(callResults);

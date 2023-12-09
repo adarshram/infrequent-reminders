@@ -1,29 +1,31 @@
 import React, { useEffect, useState, useContext } from "react";
-import { CreateEditSingle } from "../components/Reminder/CreateEditSingle";
 import { UserContext } from "../models/UserContext";
 import useServerCall from "../hooks/useServerCall";
 import useSecureCall from "../hooks/useSecureCall";
 import { StyleSheet, View, Text, SafeAreaView } from "react-native";
 import { TextInput, SegmentedButtons, Divider } from "react-native-paper";
 import { Button, Dialog, Portal, Surface } from "react-native-paper";
-import ReminderForm from "../components/Reminder/SingleFormParts/ReminderForm";
-export interface SaveReminder {
+import SubjectDescription from "../components/Reminder/SetFormParts/SubjectDescription";
+export type SingleReminderSetType = {
 	subject: string;
 	description: string;
-	frequency: number;
-	frequency_type: string;
-	notification_date: date;
-	id?: number;
-}
-export const SingleReminder = ({ navigation, route }) => {
+	reminders: Array<any>;
+	id?: number | boolean;
+};
+
+export const SingleReminderSet = ({ navigation, route }) => {
 	const signedInUser = useContext(UserContext);
 	const [serverReminderData, isLoading, error, requester] = useServerCall();
 	const [saveData, saveLoading, saveError, saveRequest] = useServerCall();
-	const [reminderData, setReminderData] = useState<boolean | SaveReminder>({
-		id: false,
-	});
+	const [listData, listLoading, listError, listRequest] = useServerCall();
+
+	const [reminderData, setReminderData] = useState<
+		boolean | SingleReminderSetType
+	>(false);
+
 	const { user } = signedInUser;
 	const hasReminderId = route.params?.reminderId ? true : false;
+
 	const prefilledDate = route.params?.prefilledDate
 		? route.params.prefilledDate
 		: "";
@@ -31,7 +33,8 @@ export const SingleReminder = ({ navigation, route }) => {
 
 	useEffect(() => {
 		if (hasReminderId) {
-			requester.get(`user/notifications/show/${route.params.reminderId}`);
+			requester.get(`user/reminderSet/get/${route.params.reminderId}`);
+			//listRequest.get("user/reminderSet/list");
 		}
 		const createForDate = !hasReminderId && prefilledDate;
 		if (!hasReminderId && hasPrefilledDate) {
@@ -52,6 +55,7 @@ export const SingleReminder = ({ navigation, route }) => {
 	useEffect(() => {
 		if (serverReminderData?.data) {
 			navigation.setOptions({ title: "Edit Reminder" });
+			console.log(serverReminderData.data);
 			setReminderData(serverReminderData.data);
 		}
 		if (!serverReminderData) {
@@ -63,25 +67,28 @@ export const SingleReminder = ({ navigation, route }) => {
 			});
 		}
 	}, [serverReminderData, navigation]);
-	const saveSchedule = async (saveBody: SaveReminder) => {
+	const saveSchedule = async (saveBody: SingleReminderSetType) => {
 		if (hasReminderId) {
 			saveBody = {
 				...saveBody,
-				id: route.params.reminderId,
+				formValues: {
+					...saveBody.formValues,
+					id: route.params.reminderId,
+				},
 			};
 		}
-		await saveRequest.post("user/notifications/save", saveBody);
-		navigation.goBack({ name: "Home" });
+
+		const response = await saveRequest.post(
+			"user/reminderSet/save",
+			saveBody,
+		);
+		navigation.navigate("ListReminderSet");
 	};
 	return (
 		<>
-			<ReminderForm
+			<SubjectDescription
 				onSave={(v) => saveSchedule(v)}
-				prefillData={
-					reminderData.id || reminderData.notification_date
-						? reminderData
-						: false
-				}
+				prefillData={reminderData.id ? reminderData : {}}
 				onCancel={() => navigation.goBack({ name: "Home" })}
 			/>
 		</>
