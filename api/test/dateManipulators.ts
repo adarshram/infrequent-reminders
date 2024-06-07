@@ -1,4 +1,8 @@
-import { calculateSnoozeDate, calculateNextNotification } from './../src/utils/dateManipulators';
+import {
+  calculateSnoozeDate,
+  calculateNextNotification,
+  calculateNextNotificationForAnchor,
+} from './../src/utils/dateManipulators';
 import { createConnection } from 'typeorm';
 import { expect } from 'chai';
 import 'mocha';
@@ -10,9 +14,11 @@ import {
   addDays,
   subDays,
   compareAsc,
+  setDate,
+  lastDayOfMonth,
 } from 'date-fns';
 
-//npm test test/dateManipulators.ts -- --grep "snoozes notifications depending on count"
+//npm test test/dateManipulators.ts -- --grep "should give next notification on anchor"
 
 describe('dbConnection', () => {
   it('dbConnection', async () => {
@@ -55,6 +61,41 @@ describe('should give snooze date', () => {
     //100 percent
     result = calculateSnoozeDate(new Date(), 1, 'm', 8);
     expect(result.days >= 28 && result.days <= 31).to.equal(true);
+  });
+});
+describe('should give next notification on anchor', () => {
+  it('month anchor date', () => {
+    const monthAnchorCases = [
+      {
+        currentDate: new Date('2024-01-31'),
+        frequency: 1,
+        anchor_number: 31,
+        expectedDate: new Date('2024-02-29'),
+      },
+      {
+        currentDate: new Date('2024-05-31'),
+        frequency: 2,
+        anchor_number: 31,
+        expectedDate: new Date('2024-07-31'),
+      },
+      {
+        currentDate: new Date('2024-05-31'),
+        frequency: 2,
+        anchor_number: 1,
+        expectedDate: new Date('2024-07-01'),
+      },
+    ];
+    monthAnchorCases.map((testCase) => {
+      const nextNotificationDate = calculateNextNotificationForAnchor(
+        testCase.currentDate,
+        testCase.frequency,
+        'm',
+        testCase.anchor_number,
+      );
+      expect(format(nextNotificationDate.date, 'yyyy-MM-dd')).to.equal(
+        format(testCase.expectedDate, 'yyyy-MM-dd'),
+      );
+    });
   });
 });
 

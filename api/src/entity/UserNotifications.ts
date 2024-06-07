@@ -25,6 +25,12 @@ export class UserNotifications {
   is_active: boolean;
 
   @Column()
+  is_anchored: boolean;
+
+  @Column()
+  anchor_number: number;
+
+  @Column()
   notification_date: Date;
 
   @Column()

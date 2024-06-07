@@ -1,8 +1,8 @@
 after installation generate sha keys and add it to google and then come back and rebuild the app .
 
-npx expo prebuild --clean <--This cleans out whatever is in build gradle etc
 npx react-native run-android <-- rebuids the app with native dependencies .
-npx eas-cli build --profile development --platform android <--Android build
+//Clear cache
+expo start --clear
 
 npx react-native build-android --mode=release <--for building android
 

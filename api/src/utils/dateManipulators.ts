@@ -4,8 +4,8 @@ import {
   addWeeks,
   addMonths,
   addDays,
-  subDays,
-  compareAsc,
+  setDate,
+  lastDayOfMonth,
 } from 'date-fns';
 interface DateReturn {
   date: Date;
@@ -77,4 +77,35 @@ export const calculateNextNotification = (
     date: nextNotificationDate,
     days: daysToNextNotification,
   };
+};
+
+export const calculateNextNotificationForAnchor = (
+  inputDate: Date,
+  frequency: number,
+  frequencyType: string,
+  anchor_number: number,
+): DateReturn => {
+  let nextNotificationDate = new Date();
+  if (frequencyType == 'm') {
+    nextNotificationDate = calculateNextDateWithAnchor(inputDate, frequency, anchor_number);
+  }
+  if (frequencyType == 'w') {
+    nextNotificationDate = addWeeks(inputDate, frequency);
+  }
+  let daysToNextNotification = differenceInCalendarDays(nextNotificationDate, inputDate);
+  return {
+    date: nextNotificationDate,
+    days: daysToNextNotification,
+  };
+};
+export const calculateNextDateWithAnchor = (
+  currentDate: Date,
+  frequency: number,
+  anchor_number: number,
+): Date => {
+  const nextNotification = addMonths(currentDate, frequency);
+  const lastDay = (format(lastDayOfMonth(nextNotification), 'dd') as unknown as number) * 1;
+  const dateDay = anchor_number > lastDay ? lastDay : anchor_number;
+  const nextNotificationDate = setDate(nextNotification, dateDay);
+  return nextNotificationDate;
 };

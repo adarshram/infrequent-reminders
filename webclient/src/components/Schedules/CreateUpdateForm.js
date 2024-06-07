@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 
 import { DatePicker } from '@mui/x-date-pickers';
-import { Grid, Alert, TextField, MenuItem } from '@mui/material';
+import { Grid, Alert, TextField, MenuItem, Switch } from '@mui/material';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import DateAdapter from '@mui/lab/AdapterDateFns';
 import { format, add } from 'date-fns';
 
 export default function CreateUpdateForm({ formValues, errors, messages, setFormValues }) {
-	const { subject, description, frequency, frequency_type, notification_date } = formValues;
+	const { subject, description, frequency, frequency_type, notification_date,is_anchored,anchor_number } = formValues;
 	const [hasUserChangedDate, setHasUserChangedDate] = useState(false);
 	const handleFrequencyChange = (e) => {
 		let updatedFormValues = {
@@ -54,7 +54,20 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 	const handleChange = (e) => {
 		updateFormValues(e.target.name, e.target.value);
 	};
+	const handleCheckBox = (e) => {
+		updateFormValues(e.target.name, e.target.checked?e.target.value:false);
+	}
 
+	const getOrGenerateAnchorNumber = (currentNumber)=>{
+		if (currentNumber === ''){
+			return '';
+		}
+		if(!currentNumber){
+			return format(new Date(), 'dd');
+		}
+		return currentNumber;
+	}
+	
 	const updateFormValues = (k, v) => {
 		setFormValues((previous) => {
 			let newState = {
@@ -162,6 +175,33 @@ export default function CreateUpdateForm({ formValues, errors, messages, setForm
 					/>
 				</LocalizationProvider>
 			</Grid>
+			{frequency_type === 'm' && (
+				<>
+				
+				<Grid item xs={3}>
+					<Switch name="is_anchored" onChange={handleCheckBox} value={1} checked={is_anchored?true:false} />
+				</Grid>
+				<Grid item xs={3}>
+				{is_anchored && (
+					
+						<TextField
+							required
+							fullWidth
+							id="anchor_number"
+							label="Anchor Number"
+							name="anchor_number"
+							value={getOrGenerateAnchorNumber(anchor_number)}
+							onChange={handleChange}
+							autoFocus
+						/>
+					
+				)}
+				</Grid>
+				<Grid item xs={6}></Grid>
+				</>
+			)}
+
+
 		</Grid>
 	);
 }
