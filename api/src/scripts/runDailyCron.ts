@@ -20,6 +20,7 @@ const runDailyCron = async () => {
 			return results;
 		}),
 	);
-	console.log(dailyCronResults);
+	const snoozeResults = await pendingNotification.snoozeEarlierNotifications();
+	console.log(snoozeResults);
 };
 runCron();

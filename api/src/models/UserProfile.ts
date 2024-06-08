@@ -98,6 +98,13 @@ export const searchVapidKeyForUser = async (fireBaseRefId: string, vapidKey: str
 	return false;
 };
 
+export const getFirebaseIdForEmail = async (emailAddress: string): Promise<string> => {
+	let userProfile = await getRepository(UserProfile).findOne({
+		where: { email: emailAddress },
+	});
+	return userProfile.fireBaseRefId;
+};
+
 export const getVapidKeysForUser = async (fireBaseRefId: string) => {
 	const db = getFireStoreDbObject();
 	const vapidKeyObject = db.collection('UserVapidKeys');

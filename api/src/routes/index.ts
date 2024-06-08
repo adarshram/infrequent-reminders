@@ -1,13 +1,16 @@
 import * as userProfile from '../controllers/userProfile';
 import * as userNotifications from '../controllers/userNotifications';
 import * as reminderSet from '../controllers/reminderSet';
+
+import * as directController from '../controllers/directController';
+
 import { successResponse, errorResponse } from '../responses';
 import { authRoute } from '../middleware';
 export const attachPublicRoutes = (app: any): void => {
   //app.post('/authentication/guest', authentication.createGuestAccount);
 };
 
-export const attachPrivateRoutes = (app: any): void => {
+export const attachPrivateRoutes = (app: any) => {
   app.get('/user/profile', authRoute, userProfile.view);
   app.post('/user/profile/save', authRoute, userProfile.save);
   app.post('/user/notificationPreference/save', authRoute, userProfile.saveNotificationPreference);
@@ -23,6 +26,8 @@ export const attachPrivateRoutes = (app: any): void => {
   app.post('/user/notifications/fullMonth', authRoute, userNotifications.listNotificationsForMonth);
   app.post('/user/notifications/listByDate', authRoute, userNotifications.listNotificationsForDate);
   app.get('/user/notifications/show/:id', authRoute, userNotifications.show);
+  app.get('/user/notifications/showLog/:id', authRoute, userNotifications.showLog);
+
   app.post('/user/notifications/delete', authRoute, userNotifications.deleteRow);
 
   app.get('/user/notifications/pending', authRoute, userNotifications.pendingNotifications);
@@ -61,6 +66,10 @@ export const attachPrivateRoutes = (app: any): void => {
   });
   app.get('/user/notificationDevices/list', authRoute, userProfile.notificationList);
   app.post('/user/notificationDevices/saveDevices', authRoute, userProfile.saveNotificationDevices);
+
+  //Direct Routes
+  app.get(`/direct/notifications/snooze/:id/:uniqueId`, directController.snoozeNotifications);
+  app.get(`/direct/notifications/complete/:id/:uniqueId`, directController.complete);
 };
 
 export const handleRoute = async (req: Request, res: Response, routeFunction: any) => {

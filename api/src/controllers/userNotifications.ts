@@ -11,8 +11,9 @@ import {
   completeNotification,
   getNotificationInMonthForUser,
   getNotificationsForUserByDate,
+  getNotificationsForToday,
 } from '../models/UserNotifications';
-import { getNotificationsForToday } from '../models/NotificationLog';
+import { getNotificationLogForId } from '../models/NotificationLog';
 import MetaNotificationsClass from '../models/MetaNotifications';
 import { successResponse, errorResponse } from '../responses';
 
@@ -37,6 +38,24 @@ export const listNotificationsForDate = async (req: Request, res: Response) => {
   successResponse(res, results);
 };
 
+export const showLog = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const fBaseUser = res.locals.user;
+  try {
+    const notificationLogDetails = await getNotificationLogForId(parseInt(id), fBaseUser.uid);
+    if (!notificationLogDetails) {
+      errorResponse(res, 'No Log Details Found');
+      return;
+    }
+
+    let response = {
+      ...notificationLogDetails,
+    };
+    successResponse(res, response);
+  } catch (err) {
+    errorResponse(res, err.message ?? 'Something Went Wrong');
+  }
+};
 export const show = async (req: Request, res: Response) => {
   const { id } = req.params;
   const fBaseUser = res.locals.user;
@@ -61,8 +80,17 @@ export const show = async (req: Request, res: Response) => {
 
 export const save = async (req: Request, res: Response) => {
   const fBaseUser = res.locals.user;
-  const { subject, description, frequency_type, frequency, notification_date, id, is_active } =
-    req.body;
+  const {
+    subject,
+    description,
+    frequency_type,
+    frequency,
+    notification_date,
+    id,
+    is_active,
+    is_anchored,
+    anchor_number,
+  } = req.body;
   const result = await createNotificationsForUser({
     id: id ? id * 1 : false,
     user_id: fBaseUser.uid,
@@ -72,6 +100,8 @@ export const save = async (req: Request, res: Response) => {
     frequency: frequency,
     notification_date: notification_date,
     is_active: is_active ? is_active : true,
+    is_anchored: is_anchored ? is_anchored : false,
+    anchor_number: anchor_number ? anchor_number : 0,
   });
   if (result) {
     successResponse(res, result);

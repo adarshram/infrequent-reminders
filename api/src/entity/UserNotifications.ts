@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
 import { MetaNotifications } from './MetaNotifications';
+import { UserProfile } from './UserProfile';
 @Entity('user_notifications')
 export class UserNotifications {
   @PrimaryGeneratedColumn()
@@ -24,6 +25,12 @@ export class UserNotifications {
   is_active: boolean;
 
   @Column()
+  is_anchored: boolean;
+
+  @Column()
+  anchor_number: number;
+
+  @Column()
   notification_date: Date;
 
   @Column()
@@ -40,4 +47,9 @@ export class UserNotifications {
     cascade: true,
   })
   meta_notifications: MetaNotifications;
+
+  @OneToOne(() => UserProfile, (profile) => profile.user_notifications, {
+    cascade: true,
+  })
+  user_profile: UserProfile;
 }
