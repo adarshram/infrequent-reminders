@@ -1,4 +1,4 @@
-package com.infrequentreminders;
+package com.infrequentscheduler.remindertest;
 
 import android.app.Application;
 import android.content.res.Configuration;

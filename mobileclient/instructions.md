@@ -12,7 +12,8 @@ Run the Gradle signing report
 cd android && ./gradlew signingReport
 
 //Build the app for dev .
-npx react-native build-android
+npx react-native build-android OR
+npx expo run:android
 
 once this completes run
 npm start .
@@ -29,5 +30,13 @@ npx react-native build-android --mode=release
 
 TroubleShooting :
 //Clear cache on expo if env file variables are stuck and build the app again
-expo start --clear
+npx expo start --clear
 npx react-native build-android
+
+in case it complains abour gradle being locked :
+find ~/.gradle -type f -name "\*.lock" -delete
+In case it complains about gradhe cache issues :
+rm -rf ~/.gradle/caches
+
+//For a clean start :
+cd android && ./gradlew clean
