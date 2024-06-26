@@ -45,7 +45,7 @@ before(async () => {
   await establishDatabaseConnection();
 });
 
-//npm test test/models/UserNotificationsTest.ts -- --grep "create two types of notification"
+//npm test test/models/UserNotificationsTest.ts -- --grep "test complete notification"
 
 describe('save new reminder set', () => {
   let reminderData = {
@@ -225,22 +225,67 @@ describe('save new reminder set', () => {
       notification_date: nextDate,
       is_active: true,
     };
+    let fiveDaysLater = addDays(new Date(), 5);
+    let fiveDaysEarlier = addDays(new Date(), -5);
+    let testInputTypes = [
+      {
+        frequency_type: 'w',
+        frequency: 1,
+        notification_date: fiveDaysLater,
+        expectedDays: 7,
+      },
+      {
+        frequency_type: 'w',
+        frequency: 1,
+        notification_date: fiveDaysEarlier,
+        expectedDays: 7,
+      },
+      {
+        frequency_type: 'd',
+        frequency: 45,
+        notification_date: new Date(),
+        expectedDays: 45,
+      },
+      {
+        frequency_type: 'y',
+        frequency: 1,
+        notification_date: new Date(),
+        expectedDays: 365,
+      },
+    ];
 
-    let createdNotification = await createNotificationsForUser(notificationParameters);
-    await completeNotification(createdNotification.id, createdNotification.user_id);
-    let updatedNotification = await getNotificationById(
-      createdNotification.id,
-      createdNotification.user_id,
+    await Promise.all(
+      testInputTypes.map(async (currentInput) => {
+        let inputParameters = {
+          user_id: '123',
+          subject: '12312312',
+          description: 'scdsacsac',
+          is_active: true,
+          frequency_type: '',
+          frequency: 0,
+          notification_date: new Date(),
+        };
+        inputParameters = {
+          ...inputParameters,
+          frequency_type: currentInput.frequency_type,
+          frequency: currentInput.frequency,
+          notification_date: currentInput.notification_date,
+        };
+        let createdNotification = await createNotificationsForUser(inputParameters);
+
+        await completeNotification(createdNotification.id, createdNotification.user_id);
+        let updatedNotification = await getNotificationById(
+          createdNotification.id,
+          createdNotification.user_id,
+        );
+        let difference = differenceInCalendarDays(
+          updatedNotification.notification_date,
+          new Date(),
+        );
+        expect(difference).to.be.equal(currentInput.expectedDays);
+        await deleteNotification(createdNotification.id);
+      }),
     );
-    let nextNotificationResult = calculateNextNotification(
-      new Date(),
-      createdNotification.frequency,
-      createdNotification.frequency_type,
-    );
-    let expectedDate = format(nextNotificationResult.date, 'yyyy-MM-dd');
-    let completedDate = format(updatedNotification.notification_date, 'yyyy-MM-dd');
-    expect(completedDate).to.be.equal(expectedDate);
-    await deleteNotification(createdNotification.id);
   });
   xit('get_notification with done count', async () => {
     let previousDate = addDays(new Date(), 5);

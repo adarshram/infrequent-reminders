@@ -6,6 +6,7 @@ import {
   addDays,
   setDate,
   lastDayOfMonth,
+  addYears,
 } from 'date-fns';
 interface DateReturn {
   date: Date;
@@ -71,6 +72,12 @@ export const calculateNextNotification = (
   if (frequencyType == 'w') {
     nextNotificationDate = addWeeks(inputDate, frequency);
   }
+  if (frequencyType == 'd') {
+    nextNotificationDate = addDays(inputDate, frequency);
+  }
+  if (frequencyType == 'y') {
+    nextNotificationDate = addYears(inputDate, frequency);
+  }
 
   let daysToNextNotification = differenceInCalendarDays(nextNotificationDate, inputDate);
   return {
@@ -90,7 +97,7 @@ export const calculateNextNotificationForAnchor = (
     nextNotificationDate = calculateNextDateWithAnchor(inputDate, frequency, anchor_number);
   }
   if (frequencyType == 'w') {
-    nextNotificationDate = addWeeks(inputDate, frequency);
+    return calculateNextNotification(inputDate, frequency, frequencyType); // For weekly frequency, we don't have anchor
   }
   let daysToNextNotification = differenceInCalendarDays(nextNotificationDate, inputDate);
   return {

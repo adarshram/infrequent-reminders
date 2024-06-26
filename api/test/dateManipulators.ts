@@ -18,7 +18,7 @@ import {
   lastDayOfMonth,
 } from 'date-fns';
 
-//npm test test/dateManipulators.ts -- --grep "should give next notification on anchor"
+//npm test test/dateManipulators.ts -- --grep "should give complete date"
 
 describe('dbConnection', () => {
   it('dbConnection', async () => {
@@ -107,5 +107,9 @@ describe('should give complete date', () => {
   it('month complete date', () => {
     const result = calculateNextNotification(new Date(), 2, 'm');
     expect(result.days > 55).to.equal(true);
+  });
+  it('days complete date', () => {
+    const result = calculateNextNotification(new Date(), 35, 'd');
+    expect(result.days >= 35).to.equal(true);
   });
 });
