@@ -4,26 +4,43 @@ import 'mocha';
 import { createConnection } from 'typeorm';
 import { establishDatabaseConnection } from './../../src/utils/dataBase';
 import {
-	sendNotificationToMobileDevice,
-	sendNotificationEmail,
+  sendNotificationToMobileDevice,
+  sendNotificationEmail,
 } from './../../src/utils/notification';
 import {
-	getMessagingObject,
-	addToCollection,
-	getFireStoreDbObject,
-	initializeFireBase,
+  getMessagingObject,
+  addToCollection,
+  getFireStoreDbObject,
+  initializeFireBase,
 } from './../../src/utils/firebase';
+
+import {
+  deleteNotification,
+  createNotificationsForUser,
+} from './../../src/models/UserNotifications';
 //npm test test/utils/notifications.ts -- --grep "first test"
 
 describe('notification data handler', () => {
-	it('first test', async () => {
-		await establishDatabaseConnection();
-		await initializeFireBase();
-		let notificationSubject = 'Test From node server';
-		let vapidKey =
-			'e9wXEr5WQW2FmjBCFrbHcE:APA91bG9ZaXGs2rpiU4XDMVwvBbbV6sYNiSUOcDNNYJYZDA3UKchklSbNLBveQ-qF-mLZlQvPtizMqCY0zPWfXnSPkHfWG0TTFSHXjlWmsqlz783FM2UebMnARbXkM3Xy7Cm0BW47geP';
-		let { success, errors } = await sendNotificationToMobileDevice(vapidKey, notificationSubject);
+  it('first test', async () => {
+    await establishDatabaseConnection();
+    await initializeFireBase();
 
-		console.log({ success, errors });
-	});
+    let notificationSubject = 'Test From node server';
+    let notificationParameters = {
+      user_id: '12345',
+      subject: '12312312',
+      description: 'scdsacsac',
+      frequency_type: 'w',
+      frequency: 1,
+      notification_date: new Date(),
+      is_active: true,
+    };
+
+    let createdNotification = await createNotificationsForUser(notificationParameters);
+    let vapidKey = '';
+    let { success, errors } = await sendNotificationToMobileDevice(vapidKey, createdNotification);
+    await deleteNotification(createdNotification.id);
+
+    console.log({ success, errors });
+  });
 });
