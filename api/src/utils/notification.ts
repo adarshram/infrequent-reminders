@@ -21,7 +21,10 @@ export const sendNotificationToMobileDevice = async (
       body: notification.description,
       notificationId: notification.id,
     },
-    notification: {},
+    android: {
+      priority: 'high',
+      ttl: 60 * 60 * 24,
+    },
     token: deviceKey,
   };
 
