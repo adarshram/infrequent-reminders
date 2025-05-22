@@ -279,6 +279,45 @@ export const deleteNotification = async (id: number): Promise<boolean> => {
   }
   return false;
 };
+
+export const getMostSnoozedNotification = async (userId: string): Promise<{ id: number; subject: string; description: string; snooze_count: number } | null> => {
+  const manager = getManager();
+  // Query to find the notification_id with the highest total snoozes for the user
+  const rawResult = await manager.createQueryBuilder(MetaNotifications, "meta")
+      .select("meta.notification_id", "raw_notification_id") // 'notification_id' is the FK in meta_notifications
+      .addSelect("SUM(meta.user_snoozed + meta.cron_snoozed)", "total_snoozes")
+      .where("meta.user_id = :userId", { userId })
+      .groupBy("meta.notification_id")
+      .orderBy("total_snoozes", "DESC")
+      .limit(1)
+      .getRawOne(); // Returns raw data like { raw_notification_id: 123, total_snoozes: "5" }
+
+  if (!rawResult || !rawResult.raw_notification_id || parseInt(rawResult.total_snoozes, 10) === 0) {
+      // If no result, or no snoozes (total_snoozes might be "0"), return null
+      return null;
+  }
+
+  const notificationId = rawResult.raw_notification_id;
+
+  // Fetch the details of the most snoozed notification
+  const notificationDetails = await getRepository(UserNotifications).findOne({ 
+    where: { id: notificationId, user_id: userId } // Ensure user_id match for security
+  });
+
+  if (!notificationDetails) {
+      // This case should ideally not be reached if data is consistent
+      // and raw_notification_id is a valid ID for that user.
+      console.warn(`Notification details not found for ID: ${notificationId} and user: ${userId}, though it was the most snoozed.`);
+      return null;
+  }
+
+  return {
+      id: notificationDetails.id,
+      subject: notificationDetails.subject,
+      description: notificationDetails.description,
+      snooze_count: parseInt(rawResult.total_snoozes, 10) // total_snoozes might be a string from raw query
+  };
+};
 interface RepositoryObject {
   createQueryBuilder: Function;
 }

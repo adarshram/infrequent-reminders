@@ -47,6 +47,8 @@ export const attachPrivateRoutes = (app: any) => {
     userNotifications.pendingNotificationCount,
   );
 
+  app.get('/user/notifications/most-snoozed', authRoute, userNotifications.getMostSnoozed);
+
   //reminder set
   app.post('/user/reminderSet/save', authRoute, reminderSet.saveSet);
   app.get('/user/reminderSet/get/:id', authRoute, reminderSet.getFullSet);

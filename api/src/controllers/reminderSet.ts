@@ -35,24 +35,38 @@ export const view = async (req: Request, res: Response) => {
 export const deleteNotificationFromSetWithId = async (req: Request, res: Response) => {
 	const fBaseUser = res.locals.user;
 	const { user_notification_id } = req.params;
-	let deleted = await deleteNotificationFromSet(parseInt(user_notification_id));
+	const numericId = parseInt(user_notification_id, 10);
+
+	if (isNaN(numericId)) {
+		errorResponse(res, 'Invalid user_notification_id parameter: Must be a number.', 400);
+		return; // Return void
+	}
+
+	let deleted = await deleteNotificationFromSet(numericId);
 	if (!deleted) {
 		errorResponse(res, 'Unable to delete');
-		return;
+		return; // Return void
 	}
 	successResponse(res, deleted);
-	return true;
+	// return true; // Original return, but void is more common after http response
 };
 export const deleteNotificationSetById = async (req: Request, res: Response) => {
 	const fBaseUser = res.locals.user;
 	const { id } = req.params;
-	let deleted = await deleteNotificationSet(parseInt(id));
+	const numericId = parseInt(id, 10);
+
+	if (isNaN(numericId)) {
+		errorResponse(res, 'Invalid ID parameter: Must be a number.', 400);
+		return; // Return void
+	}
+
+	let deleted = await deleteNotificationSet(numericId);
 	if (!deleted) {
 		errorResponse(res, 'Unable to delete');
-		return false;
+		return; // Return void
 	}
 	successResponse(res, deleted);
-	return deleted;
+	// return deleted; // Original return, but void is more common
 };
 
 export const saveSet = async (req: Request, res: Response) => {
@@ -77,30 +91,48 @@ export const saveSet = async (req: Request, res: Response) => {
 	}
 
 	if (typeof notificationResult !== 'boolean') {
-		reminders.map(async (params, index) => {
-			const singleNotificationParams = {
-				subject: params.subject,
-				description: params.description,
-				notification_date: new Date(params.notification_date),
-				days_after: params.days_after ?? 0,
-				set_id: notificationResult.id,
-				user_id: fBaseUser.uid,
-				id: params.id ? parseInt(params.id) : false,
-			};
-			const notificationLinkResult = await saveSingleNotificationForSet(
-				singleNotificationParams,
-				index,
-			);
-		});
+		try {
+			const reminderPromises = reminders.map(async (params, index) => {
+				const singleNotificationParams = {
+					subject: params.subject,
+					description: params.description,
+					notification_date: new Date(params.notification_date),
+					days_after: params.days_after ?? 0,
+					set_id: notificationResult.id,
+					user_id: fBaseUser.uid,
+					id: params.id ? parseInt(params.id) : false,
+				};
+				const notificationLinkResult = await saveSingleNotificationForSet(
+					singleNotificationParams,
+					index,
+				);
+				if (!notificationLinkResult) {
+					// Assuming saveSingleNotificationForSet returns a falsy value on error
+					throw new Error('Failed to save a reminder notification.');
+				}
+				return notificationLinkResult;
+			});
 
-		successResponse(res, notificationResult);
+			await Promise.all(reminderPromises);
+			successResponse(res, notificationResult);
+		} catch (error) {
+			console.error('Error saving reminders:', error);
+			errorResponse(res, 'An error occurred while saving reminders.');
+		}
 	}
 	return;
 };
 export const getFullSet = async (req: Request, res: Response) => {
 	const fBaseUser = res.locals.user;
 	const { id } = req.params;
-	let notificationSet = await getSetById(parseInt(id));
+	const numericId = parseInt(id, 10);
+
+	if (isNaN(numericId)) {
+		errorResponse(res, 'Invalid ID parameter: Must be a number.', 400);
+		return;
+	}
+
+	let notificationSet = await getSetById(numericId);
 	if (!notificationSet) {
 		errorResponse(res, 'No Set Found');
 		return;
@@ -124,8 +156,8 @@ export const getReminderSetList = async (req: Request, res: Response) => {
 	let setList = await getSetList(fBaseUser.uid);
 	if (!setList) {
 		errorResponse(res, 'No Set Found');
-		return false;
+		return; // Return void
 	}
 	successResponse(res, setList);
-	return setList;
+	// return setList; // Original return, but void is more common
 };
